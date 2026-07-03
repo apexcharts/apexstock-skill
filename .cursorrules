@@ -1,0 +1,135 @@
+# ApexStock: AI Coding Rules
+
+You are working with ApexStock, a financial / stock charting library built on top of ApexCharts.
+Documentation: https://apexcharts.com/docs/apexstock/
+NPM: apexstock
+GitHub: https://github.com/apexcharts/apexstock
+
+## Framework wrapper detection: check `package.json` first
+
+- `react` → use **`react-apexstock`** instead of the core API.
+- `vue` → use **`vue-apexstock`**.
+- `@angular/core` → use **`ngx-apexstock`**.
+
+Wrappers call `render()` on mount and `destroy()` on unmount, take `options` / `series` as props, and expose the instance via `getInstance()`. Use the core API directly only when no framework is detected, or when the user asks for vanilla JS. The ApexCharts-global rule below applies with wrappers too, they don't set it for you.
+
+## Critical Rules
+
+1. **ApexCharts must be a global before constructing.** ApexStock calls `new ApexCharts(...)` internally and does NOT import it. Set `window.ApexCharts = ApexCharts` first (or load ApexCharts via a UMD `<script>` before ApexStock). The constructor throws if `ApexCharts` is undefined.
+2. **Always call `stock.render()`** after `new ApexStock(el, options)`. The constructor builds state; `render()` paints the chart and mounts the toolbar / drawing tools / x-axis.
+3. **OHLC data lives in `series[0].data`** as `{ x, y: [open, high, low, close], v? }`. Four prices in ONE `y` array, NOT separate `o`/`h`/`l`/`c` keys. Points missing a valid `x` or a 4-number `y` are dropped.
+4. **Sort data ascending by `x`** (epoch-ms number, ISO string, or Date). `v` (volume) is optional.
+5. **Overlays vs oscillators.** Overlays (moving average, bollinger bands, ema, fibonacci, linear regression, ichimoku) stack on the price chart. Oscillators (rsi, macd, volumes, stochastic, adx, cci, …) get their own pane and only ONE is active at a time, adding another replaces it.
+6. **Indicator keys are lowercase full phrases**: `"moving average"`, `"bollinger bands"`, `"rsi"`, `"macd"`, `"ichimoku cloud indicator"`. Not `"ma"` / `"bb"`. Unknown keys are no-ops.
+7. **For live data use `appendData()`, not `update()`.** `appendData` updates price + indicators + panes + x-axis incrementally; `update()` does a full rebuild.
+8. **`update(newOptions)` merges + preserves** zoom, active indicators, theme, and chart type. In wrappers, pass a NEW object/array identity to trigger an update.
+9. **`destroy()` teardown gap (0.3.0):** it does NOT remove the indicator toolbar or drawing-tools DOM. Render into a dedicated wrapper element you own and remove that wrapper on teardown (especially in SPAs).
+10. **Theme** is `theme: { mode: 'light' | 'dark' }`, or `stock.updateTheme('dark')` at runtime. Restyle via `--apexstock-*` CSS variables (scoped; they don't leak to/from `:root`).
+11. **Set the license key once** at app startup: `ApexStock.setLicense('KEY')` (removes the watermark).
+12. **Trading price lines persist** across update / theme / streaming. Add via `addOrderLine` / `addStopLoss` / `addTakeProfit` / `addAlert` (or generic `addPriceLine`).
+
+---
+
+## OHLC Data Format
+
+```ts
+type OHLCPoint = {
+  x: number | string | Date;            // epoch ms | ISO string | Date; ascending
+  y: [number, number, number, number];  // [open, high, low, close]
+  v?: number;                            // optional volume
+};
+```
+
+```js
+const candles = [
+  { x: '2024-01-01', y: [100, 110, 95, 105], v: 1000000 },
+  { x: '2024-01-02', y: [105, 115, 100, 112], v: 1200000 },
+];
+```
+
+---
+
+## Lifecycle
+
+```js
+import ApexCharts from 'apexcharts';
+import ApexStock from 'apexstock';
+
+window.ApexCharts = ApexCharts;                 // REQUIRED
+ApexStock.setLicense('KEY');                    // optional, once at startup
+
+const stock = new ApexStock(document.getElementById('chart'), {
+  chart: { height: 600 },
+  series: [{ name: 'AAPL', data: candles }],
+  theme: { mode: 'light' },
+  plotOptions: { stockChart: { indicators: { 'moving average': { enabled: true } } } },
+});
+stock.render();                                 // REQUIRED
+stock.updateIndicator('rsi');                   // add/toggle indicator
+stock.appendData({ x: t, y: [o, h, l, c], v }); // stream a bar
+stock.update({ theme: { mode: 'dark' } });      // merge + re-render
+stock.destroy();                                // tear down (see rule 9)
+```
+
+---
+
+## API Methods
+
+| Method | Description |
+|---|---|
+| `render()` | Paint chart + mount sub-components. Call once. |
+| `update(opts)` | Merge options, re-render, preserve zoom/indicators/theme/type. |
+| `appendData(point\|point[], { view, maxPoints, updateLast })` | Incremental streaming append/replace. |
+| `destroy()` | Tear down (does NOT remove toolbars in 0.3.0, see rule 9). |
+| `updateIndicator(key)` / `removeIndicator(key)` | Add/refresh or remove an indicator. |
+| `updateTheme(mode)` / `getTheme()` | Switch / read theme. |
+| `addPriceLine/addOrderLine/addStopLoss/addTakeProfit/addAlert(config)` | Add trading price lines. |
+| `updatePriceLine(id, patch)` / `removePriceLine(id)` / `clearPriceLines()` | Manage price lines. |
+| `getPriceLine(id)` / `getPriceLines()` | Read price-line configs. |
+| `ApexStock.setLicense(key)` | Static: register license key. |
+| `ApexStock.aggregateOHLC(series, interval)` | Static: roll candles to a coarser timeframe. |
+| `ApexStock.INTERVALS` | Static: `1m 5m 15m 30m 1h 2h 4h 12h 1d 1w 1M`. |
+
+---
+
+## Streaming
+
+```js
+stock.appendData(bar, { view: 'follow' });   // ride the right edge (default)
+stock.appendData(bar, { view: 'preserve' }); // keep current zoom window
+stock.appendData(bar, { maxPoints: 500 });   // fixed-width rolling window
+stock.appendData(bar, { updateLast: true }); // replace the forming bar when x matches
+```
+
+Build bars from ticks yourself (or with `ApexStock.aggregateOHLC`). Use `updateLast: true` to keep an in-progress candle live, then start a new bar when the period rolls over.
+
+---
+
+## Indicators
+
+Configure at construction under `plotOptions.stockChart.indicators` (object map recommended, or an array of keys), or toggle at runtime with `updateIndicator(key)`.
+
+- **Overlays (multiple):** `"moving average"`, `"exponential moving average"`, `"bollinger bands"` (`stdDev`), `"fibonacci retracements"`, `"linear regression"`, `"ichimoku cloud indicator"`.
+- **Oscillators (one at a time):** `"rsi"`, `"macd"`, `"volumes"`, `"price volume trend"`, `"stochastic oscillator"`, `"standard deviation indicator"`, `"average directional index"`, `"chaikin oscillator"`, `"commodity channel index"`, `"trend strength index"`, `"accelerator oscillator"`, `"bollinger bands %b"`, `"bollinger bands width"`.
+
+---
+
+## Pitfalls
+
+1. Missing `window.ApexCharts` → constructor throws. Set it before any chart renders (wrappers included).
+2. Flat `{ x, o, h, l, c }` → wrong. Use `{ x, y: [o,h,l,c], v? }`. Bad points are silently dropped.
+3. `update()` per tick → slow. Use `appendData()`.
+4. Expecting multiple oscillators → only one pane is active; overlays stack.
+5. Abbreviated indicator keys → use the full phrase.
+6. Mutating the same options/series object in a wrapper → no redraw; pass a new identity (memoize in React).
+7. Assuming `destroy()` cleans everything → it leaves the toolbars in 0.3.0; use an owned wrapper element (rule 9).
+
+---
+
+## Framework Wrappers
+
+```bash
+npm install apexstock react-apexstock   # or vue-apexstock / ngx-apexstock
+```
+
+Props: `options` (required, full StockChartOptions) + `series?` (overrides `options.series`). Accessors: `getInstance()`, `getElement()`. Updates diff by identity, pass new objects/arrays. SSR-safe (client-only render). Angular selector is `apex-stock` (standalone). Still set `window.ApexCharts` at startup.
