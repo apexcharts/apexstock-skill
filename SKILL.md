@@ -15,8 +15,8 @@ description: >
   `vue-apexstock`, `ngx-apexstock`) over the core API.
 metadata:
   author: ApexCharts
-  version: "1.0.0"
-  library_version: "0.3.0"
+  version: "1.0.1"
+  library_version: "0.3.1"
   category: data-visualization
   tags: [stock, financial, candlestick, ohlc, technical-indicators, charts, apexstock]
   docs: https://apexcharts.com/docs/apexstock/
