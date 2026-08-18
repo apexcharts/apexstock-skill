@@ -35,6 +35,14 @@ stock.appendData(bar, { maxPoints: 500 });
 **Use `appendData`, not `update()`, for live data.** `update()` is for full
 reconfigures (new dataset, theme, options).
 
+Every built-in indicator has an exact **streaming twin** that steps forward
+from committed state on each append, including the 0.4.0 additions: VWAP stays
+exact in O(1), and ATR / Donchian Channels / Keltner Channels step
+incrementally (Keltner composes the EMA and ATR steppers). Custom indicators
+registered without a `stream` twin are recomputed from the full series on each
+append (still exact, but O(n); see
+[indicators.md](indicators.md)).
+
 ## Tick-to-bar recipes
 
 ApexStock renders bars; you build them from a raw tick/trade feed. Two patterns:
@@ -76,6 +84,28 @@ function onTrade({ time, price, size }) {
 
 Both keep indicators exact: a forming bar's indicator values recompute from the
 last committed state each tick, and the bar's close commits in O(1).
+
+## Visible range & lazy loading
+
+Read or set the visible x-window programmatically (0.4.0):
+
+```js
+const range = stock.getVisibleRange();          // { min, max } or null
+stock.setVisibleRange(Date.UTC(2024, 0, 1), Date.UTC(2024, 5, 30));
+```
+
+`setVisibleRange(min, max)` zooms the main chart **and every indicator pane**
+and fires the `rangeChange` event, exactly like an interactive zoom.
+`getVisibleRange()` reports the same values the `rangeChange` event carries.
+Typical lazy-loading loop: subscribe to `rangeChange`, and when the user pans
+near the left edge, fetch older bars and `update({ series })` (or prepend and
+`setVisibleRange` back to where they were).
+
+```js
+stock.on('rangeChange', ({ min, max, source }) => {
+  if (min <= earliestLoaded) loadOlderBars(min);
+});
+```
 
 ## Timeframe aggregation
 

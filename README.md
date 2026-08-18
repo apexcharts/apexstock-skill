@@ -15,18 +15,20 @@ AI coding skill for building [ApexStock](https://apexcharts.com/docs/apexstock/)
 
 ## What This Does
 
-AI models routinely get stock-chart code wrong: forgetting that ApexCharts must be a global, using flat `o`/`h`/`l`/`c` keys instead of the `y: [o,h,l,c]` array, calling `update()` on every tick instead of `appendData()`, or expecting several oscillators at once. This skill ships structured reference files so the assistant generates correct ApexStock code on the first try.
+AI models routinely get stock-chart code wrong: forgetting to provide the ApexCharts constructor, using flat `o`/`h`/`l`/`c` keys instead of the `y: [o,h,l,c]` array, calling `update()` on every tick instead of `appendData()`, or adding a second symbol as another `series` entry instead of comparison mode. This skill ships structured reference files so the assistant generates correct ApexStock code on the first try.
 
 ### Coverage
 
-- **OHLC data format**, `{ x, y: [open, high, low, close], v? }`, chart types, timestamps, normalization
-- **The ApexCharts-global requirement**, why `window.ApexCharts` must be set first
-- **Technical indicators**, overlays vs oscillators, the full key list, `period` / `stdDev` config, `calculate*` helpers
-- **Real-time streaming**, `appendData`, `view` / `maxPoints` / `updateLast`, forming-candle recipes, `aggregateOHLC`
+- **OHLC data format**, `{ x, y: [open, high, low, close], v? }`, chart types, timestamps, normalization, the data adapters (`normalize` / `fromArrays` / `fromCSV`), and `exportData` / `exportImage`
+- **Providing ApexCharts**, per-instance injection (`{ ApexCharts }`), app-wide `setApexCharts`, or the `window.ApexCharts` global
+- **Technical indicators**, overlays vs oscillators (multiple oscillator panes since 0.4.0), the full key list incl. VWAP / ATR / Donchian / Keltner, `updateIndicator(key, params)` / `setIndicatorParams`, introspection, custom indicators, `calculate*` helpers
+- **Real-time streaming**, `appendData`, `view` / `maxPoints` / `updateLast`, forming-candle recipes, visible-range accessors, `aggregateOHLC`
 - **Trading overlays**, order / stop-loss / take-profit / alert price lines with drag / close / cross callbacks
+- **Drawings & annotations**, the price/time-anchored `addDrawing` API (trend lines, rays, Fibonacci, measure, `snap`, `registerDrawingTool`) and data-space annotations (`yLine` / `yBand` / `xLine` / `xBand` / `point` / `text`)
+- **Comparison mode**, multi-symbol overlays on a secondary y-axis (percent vs absolute)
+- **Events & state**, `on` / `off` / `once`, `crosshairMove` / `rangeChange` / `indicatorToggle` / `drawing*`, `getState` / `setState` (schema v2 persists drawings)
 - **Theming**, light/dark modes and the scoped `--apexstock-*` token system
-- **Lifecycle & the 0.3.0 `destroy()` teardown gap**, with the wrapper-element remediation
-- **Framework wrappers**: `react-apexstock`, `vue-apexstock`, `ngx-apexstock`
+- **Framework wrappers**: `react-apexstock`, `vue-apexstock`, `ngx-apexstock`, incl. the `apexCharts` injection prop
 
 ## Installation
 
@@ -74,10 +76,10 @@ const streaming = await readFile(referencePath('streaming-and-aggregation.md'), 
 ├── SKILL.md                            # Main entry point, read this first
 ├── .cursorrules                        # Self-contained version for Cursor / Windsurf
 ├── references/
-│   ├── data-format.md                  # OHLC points, chart types, timestamps
-│   ├── indicators.md                   # overlays vs oscillators, keys, calculate* helpers
-│   ├── streaming-and-aggregation.md    # appendData, forming candle, aggregateOHLC
-│   ├── trading-overlays.md             # price lines, drag/close/cross, drawing tools
+│   ├── data-format.md                  # OHLC points, chart types, adapters, export
+│   ├── indicators.md                   # overlays vs oscillators, keys, params, custom indicators
+│   ├── streaming-and-aggregation.md    # appendData, forming candle, visible range, aggregateOHLC
+│   ├── trading-overlays.md             # price lines, annotations, drawings, comparison mode
 │   ├── framework-wrappers.md           # React, Vue, Angular
 │   └── theming.md                      # light/dark, --apexstock-* tokens
 └── install/

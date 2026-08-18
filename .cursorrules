@@ -1,6 +1,6 @@
 # ApexStock: AI Coding Rules
 
-You are working with ApexStock, a financial / stock charting library built on top of ApexCharts.
+You are working with ApexStock, a financial / stock charting library built on top of ApexCharts (6.x, peer `apexcharts@^6.7.0` as of ApexStock 0.4.0).
 Documentation: https://apexcharts.com/docs/apexstock/
 NPM: apexstock
 GitHub: https://github.com/apexcharts/apexstock
@@ -11,22 +11,23 @@ GitHub: https://github.com/apexcharts/apexstock
 - `vue` → use **`vue-apexstock`**.
 - `@angular/core` → use **`ngx-apexstock`**.
 
-Wrappers call `render()` on mount and `destroy()` on unmount, take `options` / `series` as props, and expose the instance via `getInstance()`. Use the core API directly only when no framework is detected, or when the user asks for vanilla JS. The ApexCharts-global rule below applies with wrappers too, they don't set it for you.
+Wrappers call `render()` on mount and `destroy()` on unmount, take `options` / `series` as props, accept an optional `apexCharts` prop/input to inject the constructor, and expose the instance via `getInstance()`. Use the core API directly only when no framework is detected, or when the user asks for vanilla JS.
 
 ## Critical Rules
 
-1. **ApexCharts must be a global before constructing.** ApexStock calls `new ApexCharts(...)` internally and does NOT import it. Set `window.ApexCharts = ApexCharts` first (or load ApexCharts via a UMD `<script>` before ApexStock). The constructor throws if `ApexCharts` is undefined.
+1. **Provide the ApexCharts constructor.** ApexStock does NOT bundle it. Three ways, resolved in order: per instance `new ApexStock(el, options, { ApexCharts })`, app-wide `ApexStock.setApexCharts(ApexCharts)`, or the `window.ApexCharts` global (fine for `<script>` tags). The constructor throws if none resolve. (Injection is new in 0.4.0; on ≤ 0.3.x only the global works.)
 2. **Always call `stock.render()`** after `new ApexStock(el, options)`. The constructor builds state; `render()` paints the chart and mounts the toolbar / drawing tools / x-axis.
-3. **OHLC data lives in `series[0].data`** as `{ x, y: [open, high, low, close], v? }`. Four prices in ONE `y` array, NOT separate `o`/`h`/`l`/`c` keys. Points missing a valid `x` or a 4-number `y` are dropped.
-4. **Sort data ascending by `x`** (epoch-ms number, ISO string, or Date). `v` (volume) is optional.
-5. **Overlays vs oscillators.** Overlays (moving average, bollinger bands, ema, fibonacci, linear regression, ichimoku) stack on the price chart. Oscillators (rsi, macd, volumes, stochastic, adx, cci, …) get their own pane and only ONE is active at a time, adding another replaces it.
-6. **Indicator keys are lowercase full phrases**: `"moving average"`, `"bollinger bands"`, `"rsi"`, `"macd"`, `"ichimoku cloud indicator"`. Not `"ma"` / `"bb"`. Unknown keys are no-ops.
+3. **OHLC data lives in `series[0].data`** as `{ x, y: [open, high, low, close], v? }`. Four prices in ONE `y` array, NOT separate `o`/`h`/`l`/`c` keys. Points missing a valid `x` or a 4-number `y` are dropped. Convert other shapes with `ApexStock.normalize` / `fromArrays` / `fromCSV`.
+4. **Sort data ascending by `x`** (epoch-ms number, ISO string, or Date). `v` (volume) is optional. Only `series[0]` is the instrument; extra symbols go through comparison mode, not extra series.
+5. **Overlays and oscillators both stack (0.4.0).** Overlays (moving average, bollinger bands, vwap, donchian/keltner channels, ema, fibonacci, linear regression, ichimoku) draw on the price chart. Oscillators (rsi, macd, volumes, atr, stochastic, adx, cci, …) each get their own pane; multiple can be active at once, the panes share the indicator area. (On ≤ 0.3.x only one oscillator at a time.)
+6. **Indicator keys are lowercase full phrases**: `"moving average"`, `"bollinger bands"`, `"rsi"`, `"vwap"`, `"ichimoku cloud indicator"`. Not `"ma"` / `"bb"`. Unknown keys are no-ops; lookup is case-insensitive.
 7. **For live data use `appendData()`, not `update()`.** `appendData` updates price + indicators + panes + x-axis incrementally; `update()` does a full rebuild.
 8. **`update(newOptions)` merges + preserves** zoom, active indicators, theme, and chart type. In wrappers, pass a NEW object/array identity to trigger an update.
-9. **`destroy()` teardown gap (0.3.0):** it does NOT remove the indicator toolbar or drawing-tools DOM. Render into a dedicated wrapper element you own and remove that wrapper on teardown (especially in SPAs).
-10. **Theme** is `theme: { mode: 'light' | 'dark' }`, or `stock.updateTheme('dark')` at runtime. Restyle via `--apexstock-*` CSS variables (scoped; they don't leak to/from `:root`).
-11. **Set the license key once** at app startup: `ApexStock.setLicense('KEY')` (removes the watermark).
-12. **Trading price lines persist** across update / theme / streaming. Add via `addOrderLine` / `addStopLoss` / `addTakeProfit` / `addAlert` (or generic `addPriceLine`).
+9. **`updateIndicator(key)` toggles; `updateIndicator(key, params)` / `setIndicatorParams(key, params)` sets params and ensures active** (never toggles off), e.g. `updateIndicator('rsi', { period: 21 })`.
+10. **`destroy()` is a full, idempotent teardown as of 0.4.0** (charts, panes, toolbars, listeners, stylesheet; StrictMode-safe). On ≤ 0.3.x it left toolbars behind, there use an owned wrapper element and remove it on teardown.
+11. **Theme** is `theme: { mode: 'light' | 'dark' }`, or `stock.updateTheme('dark')` at runtime. Restyle via `--apexstock-*` CSS variables (scoped; they don't leak to/from `:root`).
+12. **Set the license key once** at app startup: `ApexStock.setLicense('KEY')` (removes the watermark).
+13. **Persistence:** trading price lines, annotations, and comparisons persist across update / theme / chart-type switch / streaming. `getState()` / `setState()` serializes theme, chart type, indicators + params, zoom, and drawings (schema v2, `ApexStock.STATE_VERSION === 2`); price lines and annotations are NOT serialized.
 
 ---
 
@@ -47,6 +48,8 @@ const candles = [
 ];
 ```
 
+Adapters (static, output validated + time-sorted): `ApexStock.normalize(rows, mapping?)` (objects or `[x,o,h,l,c,v]` tuples, case-insensitive column aliases), `ApexStock.fromArrays({ close, open?, ... })` (only `close` required), `ApexStock.fromCSV(text, { delimiter?, header?, mapping? })`.
+
 ---
 
 ## Lifecycle
@@ -55,7 +58,6 @@ const candles = [
 import ApexCharts from 'apexcharts';
 import ApexStock from 'apexstock';
 
-window.ApexCharts = ApexCharts;                 // REQUIRED
 ApexStock.setLicense('KEY');                    // optional, once at startup
 
 const stock = new ApexStock(document.getElementById('chart'), {
@@ -63,12 +65,13 @@ const stock = new ApexStock(document.getElementById('chart'), {
   series: [{ name: 'AAPL', data: candles }],
   theme: { mode: 'light' },
   plotOptions: { stockChart: { indicators: { 'moving average': { enabled: true } } } },
-});
+}, { ApexCharts });                             // inject the constructor
 stock.render();                                 // REQUIRED
-stock.updateIndicator('rsi');                   // add/toggle indicator
+stock.updateIndicator('rsi');                   // toggle indicator
+stock.updateIndicator('rsi', { period: 21 });   // set params + ensure active
 stock.appendData({ x: t, y: [o, h, l, c], v }); // stream a bar
 stock.update({ theme: { mode: 'dark' } });      // merge + re-render
-stock.destroy();                                // tear down (see rule 9)
+stock.destroy();                                // full teardown (idempotent)
 ```
 
 ---
@@ -80,15 +83,27 @@ stock.destroy();                                // tear down (see rule 9)
 | `render()` | Paint chart + mount sub-components. Call once. |
 | `update(opts)` | Merge options, re-render, preserve zoom/indicators/theme/type. |
 | `appendData(point\|point[], { view, maxPoints, updateLast })` | Incremental streaming append/replace. |
-| `destroy()` | Tear down (does NOT remove toolbars in 0.3.0, see rule 9). |
-| `updateIndicator(key)` / `removeIndicator(key)` | Add/refresh or remove an indicator. |
+| `destroy()` | Full idempotent teardown (0.4.0). |
+| `updateIndicator(key, params?)` / `setIndicatorParams(key, params)` / `removeIndicator(key)` | Toggle, set params (ensures active), remove. |
+| `listIndicators()` / `getIndicator(key)` | Introspect indicators (key, label, type, builtin, active, streamable, params). |
+| `on/off/once/emit` | Events: `crosshairMove`, `click`, `rangeChange`, `indicatorToggle`, `drawingAdded/Updated/Removed`, `drawingsCleared`. `on` returns an unsubscriber. |
+| `getState()` / `setState(state)` | Versioned JSON snapshot: theme, chart type, indicators+params, zoom, drawings. |
+| `getVisibleRange()` / `setVisibleRange(min, max)` | Read/set the visible x-window (fires `rangeChange`). |
 | `updateTheme(mode)` / `getTheme()` | Switch / read theme. |
-| `addPriceLine/addOrderLine/addStopLoss/addTakeProfit/addAlert(config)` | Add trading price lines. |
-| `updatePriceLine(id, patch)` / `removePriceLine(id)` / `clearPriceLines()` | Manage price lines. |
-| `getPriceLine(id)` / `getPriceLines()` | Read price-line configs. |
+| `addPriceLine/addOrderLine/addStopLoss/addTakeProfit/addAlert(config)` | Trading price lines (drag/close/cross callbacks). |
+| `updatePriceLine(id, patch)` / `removePriceLine(id)` / `clearPriceLines()` / `getPriceLine(id)` / `getPriceLines()` | Manage price lines. |
+| `addAnnotation/updateAnnotation/removeAnnotation/clearAnnotations/getAnnotation/getAnnotations` | Data-space annotations: `yLine`, `yBand`, `xLine`, `xBand`, `point`, `text`. |
+| `addDrawing/updateDrawing/removeDrawing/clearDrawings/getDrawing/getDrawings` | Anchored drawings: `trendline`(`line`), `ray`, `horizontalLine`(`hline`), `verticalLine`(`vline`), `rectangle`(`zone`), `fibRetracement`, `fibExtension`, `measure`. `points: [{x,y}]`, optional `snap: true\|'open'\|'high'\|'low'\|'close'`. |
+| `addComparison({ name, data, color? })` / `removeComparison(name)` / `clearComparisons()` / `getComparisons()` / `setComparisonMode('percent'\|'absolute')` / `getComparisonMode()` | Multi-symbol overlay on a secondary y-axis (`percent` = indexed % change, default). |
+| `exportImage({ format: 'png'\|'svg', scale?, download?, filename? })` | `Promise<{ format, blob, url, fallback? }>`; PNG composites all panes, falls back to SVG. |
+| `exportData({ format: 'csv'\|'json', range: 'all'\|'visible', includeVolume?, ... })` | Serialize the OHLC series (`time,open,high,low,close[,volume]`). |
 | `ApexStock.setLicense(key)` | Static: register license key. |
-| `ApexStock.aggregateOHLC(series, interval)` | Static: roll candles to a coarser timeframe. |
-| `ApexStock.INTERVALS` | Static: `1m 5m 15m 30m 1h 2h 4h 12h 1d 1w 1M`. |
+| `ApexStock.setApexCharts(ctor)` | Static: register the ApexCharts constructor app-wide. |
+| `ApexStock.registerIndicator(name, def)` | Static: custom indicator (`{ type, calc, defaultParams?, stream? }`). |
+| `ApexStock.registerDrawingTool(name, def)` | Static: custom data-space drawing type (`def.render(data, helpers)` → SVG). |
+| `ApexStock.normalize` / `fromArrays` / `fromCSV` | Static data adapters (see above). |
+| `ApexStock.aggregateOHLC(series, interval)` / `ApexStock.INTERVALS` | Static: roll candles to a coarser timeframe (`1m 5m 15m 30m 1h 2h 4h 12h 1d 1w 1M`). |
+| `ApexStock.STATE_VERSION` / `ApexStock.migrateState(state)` | State schema version (2) and migration helper. |
 
 ---
 
@@ -101,28 +116,32 @@ stock.appendData(bar, { maxPoints: 500 });   // fixed-width rolling window
 stock.appendData(bar, { updateLast: true }); // replace the forming bar when x matches
 ```
 
-Build bars from ticks yourself (or with `ApexStock.aggregateOHLC`). Use `updateLast: true` to keep an in-progress candle live, then start a new bar when the period rolls over.
+Build bars from ticks yourself (or with `ApexStock.aggregateOHLC`). Use `updateLast: true` to keep an in-progress candle live, then start a new bar when the period rolls over. All built-in indicators (incl. vwap, atr, donchian/keltner) have exact streaming twins.
 
 ---
 
 ## Indicators
 
-Configure at construction under `plotOptions.stockChart.indicators` (object map recommended, or an array of keys), or toggle at runtime with `updateIndicator(key)`.
+Configure at construction under `plotOptions.stockChart.indicators` (object map recommended, or an array of keys), or at runtime with `updateIndicator(key)` (toggle) / `updateIndicator(key, params)` (set + ensure active).
 
-- **Overlays (multiple):** `"moving average"`, `"exponential moving average"`, `"bollinger bands"` (`stdDev`), `"fibonacci retracements"`, `"linear regression"`, `"ichimoku cloud indicator"`.
-- **Oscillators (one at a time):** `"rsi"`, `"macd"`, `"volumes"`, `"price volume trend"`, `"stochastic oscillator"`, `"standard deviation indicator"`, `"average directional index"`, `"chaikin oscillator"`, `"commodity channel index"`, `"trend strength index"`, `"accelerator oscillator"`, `"bollinger bands %b"`, `"bollinger bands width"`.
+- **Overlays (multiple):** `"moving average"`, `"exponential moving average"`, `"vwap"` (`source: 'hlc3'|'close'`), `"bollinger bands"` (`period`, `stdDev`), `"donchian channels"` (`period` 20), `"keltner channels"` (`emaPeriod` 20, `atrPeriod` 10, `multiplier` 2), `"fibonacci retracements"`, `"linear regression"`, `"ichimoku cloud indicator"`.
+- **Oscillators (multiple panes, stacked):** `"rsi"`, `"macd"`, `"volumes"`, `"price volume trend"`, `"stochastic oscillator"`, `"standard deviation indicator"`, `"average directional index"`, `"atr"`, `"chaikin oscillator"`, `"commodity channel index"`, `"trend strength index"`, `"accelerator oscillator"`, `"bollinger bands %b"`, `"bollinger bands width"`.
+
+Display labels are title-cased ("Bollinger Bands") but keys stay lowercase.
 
 ---
 
 ## Pitfalls
 
-1. Missing `window.ApexCharts` → constructor throws. Set it before any chart renders (wrappers included).
-2. Flat `{ x, o, h, l, c }` → wrong. Use `{ x, y: [o,h,l,c], v? }`. Bad points are silently dropped.
+1. ApexCharts not provided → constructor throws. Inject it (`{ ApexCharts }` / `setApexCharts`) or set the global.
+2. Flat `{ x, o, h, l, c }` → wrong. Use `{ x, y: [o,h,l,c], v? }` (or run rows through `ApexStock.normalize`).
 3. `update()` per tick → slow. Use `appendData()`.
-4. Expecting multiple oscillators → only one pane is active; overlays stack.
+4. Removing an oscillator before adding another → unnecessary since 0.4.0; oscillator panes stack.
 5. Abbreviated indicator keys → use the full phrase.
-6. Mutating the same options/series object in a wrapper → no redraw; pass a new identity (memoize in React).
-7. Assuming `destroy()` cleans everything → it leaves the toolbars in 0.3.0; use an owned wrapper element (rule 9).
+6. A second symbol as another `series` entry → treated as an indicator. Use `addComparison({ name, data })`.
+7. Mutating the same options/series object in a wrapper → no redraw; pass a new identity (memoize in React).
+8. Expecting `getState()` to capture price lines/annotations → it captures theme, chart type, indicators, zoom, and drawings only.
+9. Custom drawings missing after reload → call `ApexStock.registerDrawingTool` again before `setState()`.
 
 ---
 
@@ -132,4 +151,4 @@ Configure at construction under `plotOptions.stockChart.indicators` (object map 
 npm install apexstock react-apexstock   # or vue-apexstock / ngx-apexstock
 ```
 
-Props: `options` (required, full StockChartOptions) + `series?` (overrides `options.series`). Accessors: `getInstance()`, `getElement()`. Updates diff by identity, pass new objects/arrays. SSR-safe (client-only render). Angular selector is `apex-stock` (standalone). Still set `window.ApexCharts` at startup.
+Props: `options` (required, full StockChartOptions), `series?` (overrides `options.series`), `apexCharts?` (inject the imported constructor, no global needed). Accessors: `getInstance()`, `getElement()`. Updates diff by identity, pass new objects/arrays. SSR-safe (client-only render). Angular selector is `apex-stock` (standalone). Unmount is fully clean with core 0.4.0+.
