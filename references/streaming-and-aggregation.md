@@ -38,9 +38,12 @@ reconfigures (new dataset, theme, options).
 Every built-in indicator has an exact **streaming twin** that steps forward
 from committed state on each append, including the 0.4.0 additions: VWAP stays
 exact in O(1), and ATR / Donchian Channels / Keltner Channels step
-incrementally (Keltner composes the EMA and ATR steppers). Custom indicators
-registered without a `stream` twin are recomputed from the full series on each
-append (still exact, but O(n); see
+incrementally (Keltner composes the EMA and ATR steppers). The 0.5.0 **drawdown
+pane** streams too: its state is the running peak, so the step is O(1) with no
+warm-up period, and the pane's "max" label is re-asserted after each append so a
+new deeper trough moves it instead of leaving a stale line behind. Custom
+indicators registered without a `stream` twin are recomputed from the full
+series on each append (still exact, but O(n); see
 [indicators.md](indicators.md)).
 
 ## Tick-to-bar recipes
@@ -106,6 +109,32 @@ stock.on('rangeChange', ({ min, max, source }) => {
   if (min <= earliestLoaded) loadOlderBars(min);
 });
 ```
+
+### `rangeChange` vs `rangeChanging` (0.5.0)
+
+`rangeChange` keeps its **once-per-gesture** semantics: a wheel or pinch zoom
+emits it when the gesture settles, not on every frame. That is the right rhythm
+for fetching data or writing the range to a URL, and it is what the lazy-loading
+loop above depends on.
+
+`rangeChanging` is the **per-frame** companion, with the same payload and
+`source: 'live'`, for overlays that have to stay glued to the axis while the
+gesture runs:
+
+```js
+stock.on('rangeChanging', ({ min, max }) => positionMyOverlay(min, max));
+stock.on('rangeChange',   ({ min, max }) => fetchIfNeeded(min, max));
+```
+
+Reach for `rangeChanging` only when something must move every frame. Doing a
+fetch there will fire one request per animation frame.
+
+This pairing came out of a 0.5.0 fix: everything ApexStock draws **around** the
+plot (the custom x-axis, event markers, draggable price-line handles, linked
+charts) used to hang off the settled callback alone, so during a wheel zoom the
+candles moved while the chrome stood still and then snapped into place ~135ms
+late. The chrome now also tracks ApexCharts' per-frame `updated` signal, guarded
+on the x-window having actually moved. Drag-panning was never affected.
 
 ## Timeframe aggregation
 

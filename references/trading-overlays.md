@@ -172,10 +172,27 @@ stock.clearDrawings();
   (default true); `measure` accepts `upColor` / `downColor` / `showLabel`.
 - The line-family drawings (trend/ray/level/time/fib/measure) are draggable in
   the UI.
+- **Two-anchor drawings can be reshaped (0.5.0).** Selecting a measure box,
+  trend line, ray or fib puts a drag handle on **each of its two anchors**:
+  drag one to change what it covers from that end. For a measurement, the
+  statistics recompute over the bars it now spans. Previously a two-anchor
+  drawing could only be translated, so re-measuring meant deleting and
+  redrawing. Dragging the **body** still translates with the span intact, which
+  is deliberate: that is how a measured move is projected onto a later
+  breakout. A `locked: true` drawing shows no handles.
 - Add/patch/remove/clear emit `drawingAdded` / `drawingUpdated` /
-  `drawingRemoved` / `drawingsCleared` events (see SKILL.md §9).
+  `drawingRemoved` / `drawingsCleared` events (see SKILL.md §10).
 - The whole drawing set is captured by `getState()` and restored by
-  `setState()` (state schema v2).
+  `setState()` (state schema v2). Measurements ride here too: a measurement
+  *is* a `measure` drawing, so it needs no state key of its own. See
+  [analysis.md](analysis.md) for `measureRange()` and the analysis panel.
+
+Two 0.5.0 interaction fixes, in case you carry a workaround: **selecting a
+drawing no longer makes it undraggable** (a blanket `pointer-events: all` on
+overlay shapes used to beat the selection outline's `pointer-events="none"`, so
+the outline swallowed every click meant for the element underneath), and **the
+style popup no longer opens on top of the drawing it belongs to** (it is now
+placed below, above, right or left, whichever fits inside the chart).
 
 ### Custom drawing tools: `ApexStock.registerDrawingTool(name, def)`
 
@@ -218,7 +235,7 @@ primary candlestick. Do **not** add extra symbols as extra `series` entries
 stock.addComparison({ name: 'MSFT', data: msftBars }); // data: [{x, y}] closes or full OHLC (close is used)
 stock.addComparison({ name: 'SPY', data: spyBars, color: '#FEB019' });
 
-stock.setComparisonMode('percent');   // default: indexed % change from each series' first point
+stock.setComparisonMode('percent');   // default
 stock.setComparisonMode('absolute');  // raw prices instead
 stock.getComparisonMode();
 
@@ -227,14 +244,124 @@ stock.removeComparison('SPY');
 stock.clearComparisons();
 ```
 
-- **`percent`** (default): every instrument is indexed to its first point
-  (0%), so you compare performance ("who's up more") regardless of nominal
-  price.
+- **`percent`** (default): percent change from the baseline, so you compare
+  performance ("who's up more") regardless of nominal price.
 - **`absolute`**: raw close prices on the secondary axis (best for same-scale
   peers).
 - You supply the compared instrument's data (ApexStock does not fetch it).
 - Comparisons persist across zoom, theme change, chart-type switch, indicator
   toggles, and `appendData`.
+- **A comparison instrument may not take the primary series' name (0.5.0)**, nor
+  the reserved `'__primary__'`. Previously that filtered the price series off
+  the chart.
+
+> **Comparison was rebuilt in 0.5.0** and is much larger than the four calls
+> above: instruments are aligned onto one shared x grid before anything is
+> normalized (`join` / `fill`), 0% can sit in four different places
+> (`baseline`, whose **default changed** from each instrument's own first point
+> to `'common'`), there are three new modes (`indexed`, `relative`, `ratio`),
+> the benchmark is a role you can point at any instrument, and
+> `getComparisonStats()` returns a render-ready leaderboard. All of it is in
+> **[analysis.md](analysis.md)**. The `percent` / `absolute` pair above still
+> works exactly as before.
+
+## Event markers (0.5.0)
+
+Time-anchored flags that float along the x-axis with a hover card. Drawn on a
+lightweight HTML overlay that reprojects through zoom and pan and hides markers
+scrolled off the visible range.
+
+```js
+const id = stock.addEventMarker({
+  x: '2024-02-01',       // epoch ms | ISO string | Date
+  type: 'earnings',      // 'earnings' | 'dividend' | 'split' | 'news' | 'custom'
+  label: 'Q4 beat',
+  color: undefined,      // defaults to the type's own colour
+  glyph: undefined,      // defaults to the type's own glyph
+  position: 'top',       // 'top' | 'bottom'
+  meta: { eps: 2.18 },   // anything; handed back on hover/click
+});
+
+stock.updateEventMarker(id, { label: 'Q4 beat (revised)' });
+stock.removeEventMarker(id);
+stock.clearEventMarkers();
+stock.getEventMarker(id);
+stock.getEventMarkers();
+```
+
+Each of the five types has a default glyph and colour. Markers are captured by
+`getState()` and restored by `setState()` (state schema v2 gains an
+`eventMarkers` field).
+
+**Events:** `eventMarkerAdded` / `eventMarkerUpdated` (`{ id, marker }`),
+`eventMarkerRemoved` (`{ id }`), `eventMarkersCleared` (`{}`), and
+`eventMarkerHover` / `eventMarkerClick` (`{ id, marker, nativeEvent }`).
+
+## On-chart data legend (0.5.0)
+
+A corner panel that reads out the instrument's OHLC, change (vs the previous
+close), and volume at the crosshair, falling back to the latest bar, plus the
+value of each main-chart **overlay** indicator.
+
+```js
+new ApexStock(el, {
+  legend: {
+    show: true,
+    position: 'top-left',   // 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+    showChange: true,
+    showVolume: true,
+    showIndicators: true,
+  },
+});
+
+stock.showLegend({ position: 'bottom-right' });
+stock.hideLegend();
+stock.toggleLegend();      // -> the new visibility
+stock.isLegendVisible();
+```
+
+It tracks the pointer via the `crosshairMove` event, stays in sync as
+indicators toggle, and is `pointer-events: none` so it never intercepts chart
+interaction. A bottom corner clears the custom x-axis strip, so it means the
+bottom of the **plot** (fixed in 0.5.0: the strip is opaque and painted above
+the legend, so a `bottom-left` panel used to have its lower rows silently
+sliced off).
+
+For the same numbers programmatically, without the panel, use
+`getDataAt(index)` (see [analysis.md](analysis.md)).
+
+## Toolbar customization (0.5.0)
+
+Hide the whole primary toolbar, hide individual built-in sections, or inject
+your own controls.
+
+```js
+new ApexStock(el, {
+  toolbar: {
+    show: true,
+    items: { chartType: true, indicators: true, drawing: true, download: false },
+  },
+});
+```
+
+Each built-in section is shown by default. Custom items:
+
+```js
+const id = stock.addToolbarItem({
+  id: 'snapshot',
+  title: 'Snapshot',
+  icon: '📷',                       // or html: '<svg…>', or element: someNode
+  position: 'right',                // 'left' | 'left-start' | 'right'
+  order: 10,                        // sort within the position
+  onClick: (chart, event) => chart.export({ format: 'png', download: true }),
+});
+
+stock.removeToolbarItem(id);
+stock.getToolbarItems();   // -> [{ id, title, position }]
+```
+
+Custom items carry `.apexstock-toolbar-button`, so they follow the active theme
+and any preset.
 
 ## Teardown
 

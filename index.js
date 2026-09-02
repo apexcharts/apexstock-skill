@@ -17,9 +17,11 @@ export const referencesDir = join(packageRoot, 'references');
  * `referencesDir`. Useful for iterating without scanning the filesystem.
  */
 export const referenceFiles = [
+  'analysis.md',
   'data-format.md',
   'framework-wrappers.md',
   'indicators.md',
+  'state-and-export.md',
   'streaming-and-aggregation.md',
   'theming.md',
   'trading-overlays.md',

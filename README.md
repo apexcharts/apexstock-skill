@@ -11,11 +11,14 @@ AI coding skill for building [ApexStock](https://apexcharts.com/docs/apexstock/)
 > | ApexTree, hierarchy / org charts | `apextree` | [`apextree-skill`](https://github.com/apexcharts/apextree-skill) |
 > | ApexSankey, flow / Sankey | `apexsankey` | [`apexsankey-skill`](https://github.com/apexcharts/apexsankey-skill) |
 > | Apex Grid, data grid | `apex-grid` | [`apexgrid-skill`](https://github.com/apexcharts/apexgrid-skill) |
+| ApexMaps, maps / geo | `apexmaps` | [`apexmaps-skill`](https://github.com/apexcharts/apexmaps-skill) |
 > | **ApexStock**, financial / stock · *this skill* | `apexstock` | `apexstock-skill` |
 
 ## What This Does
 
 AI models routinely get stock-chart code wrong: forgetting to provide the ApexCharts constructor, using flat `o`/`h`/`l`/`c` keys instead of the `y: [o,h,l,c]` array, calling `update()` on every tick instead of `appendData()`, or adding a second symbol as another `series` entry instead of comparison mode. This skill ships structured reference files so the assistant generates correct ApexStock code on the first try.
+
+> **ApexStock 0.5.0 requires `apexcharts` `^7.1.0`** (it was `^6.7.0` for 0.4.0). This is a breaking change, and the wrappers at 0.2.2 carry it too. The skill leads with it.
 
 ### Coverage
 
@@ -25,9 +28,12 @@ AI models routinely get stock-chart code wrong: forgetting to provide the ApexCh
 - **Real-time streaming**, `appendData`, `view` / `maxPoints` / `updateLast`, forming-candle recipes, visible-range accessors, `aggregateOHLC`
 - **Trading overlays**, order / stop-loss / take-profit / alert price lines with drag / close / cross callbacks
 - **Drawings & annotations**, the price/time-anchored `addDrawing` API (trend lines, rays, Fibonacci, measure, `snap`, `registerDrawingTool`) and data-space annotations (`yLine` / `yBand` / `xLine` / `xBand` / `point` / `text`)
-- **Comparison mode**, multi-symbol overlays on a secondary y-axis (percent vs absolute)
-- **Events & state**, `on` / `off` / `once`, `crosshairMove` / `rangeChange` / `indicatorToggle` / `drawing*`, `getState` / `setState` (schema v2 persists drawings)
-- **Theming**, light/dark modes and the scoped `--apexstock-*` token system
+- **Comparison mode**, multi-instrument overlays with alignment policies, four baseline policies, five modes (absolute / percent / indexed / relative / ratio), the benchmark role, and the `getComparisonStats()` leaderboard
+- **Analysis workspace** (0.5.0), `getRangeStats` / `getDrawdown` / the drawdown pane / per-pane heights / `measureRange` and the analysis panel / `getDataAt` / price-scale modes / the headless `ApexStock.stats` namespace
+- **Chart furniture** (0.5.0), event markers, the on-chart data legend, toolbar customization, and `ApexStock.sync()` for linking independent charts
+- **Events & state**, `on` / `off` / `once`, `crosshairMove` / `rangeChange` / `rangeChanging` / `indicatorToggle` / `drawing*` / `eventMarker*` / `priceScaleChange` / `rangeMeasured` / `comparison*`, and `getState` / `setState` (schema v2 now persists annotations, price lines, event markers, price scale, pane ratios, and the comparison setup)
+- **Export**, unified `export()` over png / svg / **pdf** / csv / json, with `include: ['indicators', 'analysis']`
+- **Theming**, light/dark modes, the named preset pack + `registerTheme`, and the scoped `--apexstock-*` token system
 - **Framework wrappers**: `react-apexstock`, `vue-apexstock`, `ngx-apexstock`, incl. the `apexCharts` injection prop
 
 ## Installation
@@ -76,12 +82,14 @@ const streaming = await readFile(referencePath('streaming-and-aggregation.md'), 
 ├── SKILL.md                            # Main entry point, read this first
 ├── .cursorrules                        # Self-contained version for Cursor / Windsurf
 ├── references/
+│   ├── analysis.md                     # statistics, drawdown, measurements, comparison v2, price scale
 │   ├── data-format.md                  # OHLC points, chart types, adapters, export
-│   ├── indicators.md                   # overlays vs oscillators, keys, params, custom indicators
+│   ├── indicators.md                   # overlays vs oscillators, keys, params, panes, custom indicators
+│   ├── state-and-export.md             # getState/setState v2, export() incl. PDF, ApexStock.sync
 │   ├── streaming-and-aggregation.md    # appendData, forming candle, visible range, aggregateOHLC
-│   ├── trading-overlays.md             # price lines, annotations, drawings, comparison mode
+│   ├── trading-overlays.md             # price lines, annotations, drawings, event markers, legend, toolbar
 │   ├── framework-wrappers.md           # React, Vue, Angular
-│   └── theming.md                      # light/dark, --apexstock-* tokens
+│   └── theming.md                      # light/dark, theme presets, --apexstock-* tokens
 └── install/
     ├── claude-code.md
     ├── cursor.md

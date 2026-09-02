@@ -86,6 +86,34 @@ another. (On ≤ 0.3.x only one oscillator was active at a time.)
 | `"bollinger bands %b"` | Position within the bands (0-1). |
 | `"bollinger bands width"` | Band width (volatility). |
 
+## Analysis panes (0.5.0)
+
+The dropdown groups these under an **Analysis** heading (a new optional `group`
+on a registry entry), keeping analysis views distinct from technical indicators
+without adding a second control. They are ordinary registry entries, so they
+toggle, stack, zoom, theme, and persist exactly like an oscillator.
+
+| Key | Notes |
+|---|---|
+| `"drawdown"` | Percent below the running peak, with zero pinned to the **top** of the axis (a drawdown is never positive) and the deepest point labelled on the pane. Measures on the chart's `analysis.drawdownBasis`, so it cannot disagree with `getRangeStats()` or `getDrawdown()`. Streams incrementally on `appendData` (the state is the running peak, so the step is O(1) with no warm-up). Takes **1.4** height shares by default. See [analysis.md](analysis.md). |
+
+## Per-pane heights (0.5.0)
+
+Panes divide the indicator area in proportion to a relative `heightRatio`
+rather than always evenly: two panes at 1 and 2 split it one-third /
+two-thirds. Most indicators take 1; the drawdown pane takes 1.4.
+
+```js
+new ApexStock(el, { panes: { drawdown: { heightRatio: 2 } } });   // at construction
+
+stock.setPaneHeightRatio('rsi', 1.5);     // at runtime
+stock.setPaneHeightRatio('rsi', null);    // restore that pane's default
+stock.getPaneHeightRatios();
+```
+
+The heights always add up to the container exactly, and the ratios you set are
+captured by `getState()` under a `panes` key.
+
 ## Key rules
 
 - **Keys are lowercase full phrases**, `"moving average"`, not `"ma"`;
@@ -98,6 +126,12 @@ another. (On ≤ 0.3.x only one oscillator was active at a time.)
 - **Overlays and oscillators both stack** (0.4.0). Every active indicator
   round-trips through `getState()` / `setState()`, including multiple
   oscillators.
+- **Panes share the area by ratio, not evenly** (0.5.0). See "Per-pane heights"
+  above.
+- **Every active indicator's current value is readable programmatically**
+  (0.5.0) with `getDataAt(index)`, across both main-chart overlays and
+  oscillator panes: `[{ name, value, color, pane, key? }]`. Values are plain
+  numbers; warm-up entries are omitted. See [analysis.md](analysis.md).
 - Streaming keeps indicators exact: on `appendData`, running indicators
   (including VWAP, ATR, Donchian, and Keltner) step forward from committed
   state (see [streaming-and-aggregation.md](streaming-and-aggregation.md)).

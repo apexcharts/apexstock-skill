@@ -1,6 +1,10 @@
 # ApexStock: AI Coding Rules
 
-You are working with ApexStock, a financial / stock charting library built on top of ApexCharts (6.x, peer `apexcharts@^6.7.0` as of ApexStock 0.4.0).
+You are working with ApexStock, a financial / stock charting library built on top of ApexCharts.
+
+!! BREAKING in ApexStock 0.5.0: the `apexcharts` peer is now `^7.1.0` (was `^6.7.0` for 0.4.0, `^5.15.0` for 0.3.x).
+Run `npm install apexcharts@^7.1.0` when upgrading. The wrappers ship at 0.2.2 with the same requirement, and
+`apexstock: ">=0.5.0 <1"` is the only range that agrees with `apexcharts: "^7.1.0"` (ERESOLVE otherwise).
 Documentation: https://apexcharts.com/docs/apexstock/
 NPM: apexstock
 GitHub: https://github.com/apexcharts/apexstock
@@ -86,21 +90,40 @@ stock.destroy();                                // full teardown (idempotent)
 | `destroy()` | Full idempotent teardown (0.4.0). |
 | `updateIndicator(key, params?)` / `setIndicatorParams(key, params)` / `removeIndicator(key)` | Toggle, set params (ensures active), remove. |
 | `listIndicators()` / `getIndicator(key)` | Introspect indicators (key, label, type, builtin, active, streamable, params). |
-| `on/off/once/emit` | Events: `crosshairMove`, `click`, `rangeChange`, `indicatorToggle`, `drawingAdded/Updated/Removed`, `drawingsCleared`. `on` returns an unsubscriber. |
-| `getState()` / `setState(state)` | Versioned JSON snapshot: theme, chart type, indicators+params, zoom, drawings. |
+| `on/off/once/emit` | Events: `crosshairMove`, `click`, `rangeChange` (once per gesture), `rangeChanging` (0.5.0, per frame, `source: 'live'`), `indicatorToggle`, `drawingAdded/Updated/Removed`, `drawingsCleared`, and 0.5.0: `eventMarkerAdded/Updated/Removed/Cleared/Hover/Click`, `priceScaleChange`, `rangeMeasured`, `measurementRemoved`, `comparisonChange`, `comparisonRestoreNeeded`. `on` returns an unsubscriber. |
+| `getState()` / `setState(state)` | Versioned JSON snapshot (v2). 0.5.0 captures theme + preset, chart type, indicators+params, zoom, drawings, annotations, price lines, event markers, price scale, pane ratios, comparison setup. NOT captured: price-line callbacks (re-bind with `updatePriceLine`) and comparison instrument data (answer `comparisonRestoreNeeded` with `addComparison`). |
 | `getVisibleRange()` / `setVisibleRange(min, max)` | Read/set the visible x-window (fires `rangeChange`). |
 | `updateTheme(mode)` / `getTheme()` | Switch / read theme. |
 | `addPriceLine/addOrderLine/addStopLoss/addTakeProfit/addAlert(config)` | Trading price lines (drag/close/cross callbacks). |
 | `updatePriceLine(id, patch)` / `removePriceLine(id)` / `clearPriceLines()` / `getPriceLine(id)` / `getPriceLines()` | Manage price lines. |
 | `addAnnotation/updateAnnotation/removeAnnotation/clearAnnotations/getAnnotation/getAnnotations` | Data-space annotations: `yLine`, `yBand`, `xLine`, `xBand`, `point`, `text`. |
 | `addDrawing/updateDrawing/removeDrawing/clearDrawings/getDrawing/getDrawings` | Anchored drawings: `trendline`(`line`), `ray`, `horizontalLine`(`hline`), `verticalLine`(`vline`), `rectangle`(`zone`), `fibRetracement`, `fibExtension`, `measure`. `points: [{x,y}]`, optional `snap: true\|'open'\|'high'\|'low'\|'close'`. |
-| `addComparison({ name, data, color? })` / `removeComparison(name)` / `clearComparisons()` / `getComparisons()` / `setComparisonMode('percent'\|'absolute')` / `getComparisonMode()` | Multi-symbol overlay on a secondary y-axis (`percent` = indexed % change, default). |
+| `addComparison({ name, data, color? })` / `removeComparison(name)` / `clearComparisons()` / `getComparisons()` | Multi-instrument overlay on a secondary y-axis. A comparison may NOT take the primary series' name (0.5.0). |
+| `setComparisonMode(mode)` / `getComparisonMode()` | 0.5.0: `'absolute'`, `'percent'` (default), `'indexed'`, `'relative'`, `'ratio'`. |
+| `setComparisonBenchmark(name)` / `getComparisonBenchmark()` | 0.5.0: the benchmark is a role; any instrument or `'__primary__'` (default). |
+| `setComparisonOptions(patch)` / `getComparisonOptions()` | 0.5.0: `{ join, fill, baseline, indexBase, source, rebaseRatio, resample }`. `baseline` DEFAULT CHANGED to `'common'` (was each instrument's own first point; `'own'` restores it). |
+| `getComparisonStats(opts?)` | 0.5.0: render-ready leaderboard (change, excess return, high, low, volatility, drawdown, rank, coverage). |
+| `getRangeStats(from, to, opts?)` | 0.5.0: window statistics. Unrounded, percent units, `null` + `warnings` when unsupported, counts are BARS. |
+| `getDrawdown(opts?)` / `updateIndicator('drawdown')` | 0.5.0: drawdown as data, or as an analysis pane. `basis: 'intrabar'` for the conservative figure. |
+| `measureRange(from, to)` / `getMeasurements()` / `getMeasurement(id)` / `clearMeasurement(id?)` | 0.5.0: persistent measurements. A measurement IS a `measure` drawing (no separate state key). `stats.change` = close-to-close over the span; `selection` = the dragged anchor delta. |
+| `showAnalysisPanel()` / `hideAnalysisPanel()` / `isAnalysisPanelVisible()` | 0.5.0: on-chart region-statistics readout, automatic by default. |
+| `getDataAt(index?)` | 0.5.0: OHLC + volume + change + every active indicator value (`{ name, value, color, pane, key? }`). Defaults to the latest bar. |
+| `setPriceScale(mode, opts?)` / `getPriceScale()` | 0.5.0: `'linear'` / `'logarithmic'` / `'percent'` / `'indexed'`. `percent` and `indexed` are affine relabelings, so indicators/drawings/price lines stay in true price space. |
+| `setPaneHeightRatio(key, ratio)` / `getPaneHeightRatios()` | 0.5.0: panes split the indicator area by ratio (1 default, 1.4 for drawdown). `null` restores. |
+| `addEventMarker/updateEventMarker/removeEventMarker/clearEventMarkers/getEventMarker/getEventMarkers` | 0.5.0: time-anchored `earnings`/`dividend`/`split`/`news`/`custom` flags with a hover card. |
+| `showLegend/hideLegend/toggleLegend/isLegendVisible` | 0.5.0: on-chart OHLC + change + volume + overlay readout at the crosshair. |
+| `addToolbarItem(def)` / `removeToolbarItem(id)` / `getToolbarItems()` | 0.5.0: `{ id, title, icon\|html\|element, onClick, position, order }`. |
+| `setThemePreset(name)` / `getThemePreset()` | 0.5.0: `paper`, `arctic`, `mint`, `linen`, `rose`, `graphite`. Cleared by `updateTheme()`. |
+| `export({ format })` | 0.5.0: unified over `png`/`svg`/`pdf`/`csv`/`json`. `include: ['indicators','analysis']` carries the analysis in; PDF gets a text summary band. |
 | `exportImage({ format: 'png'\|'svg', scale?, download?, filename? })` | `Promise<{ format, blob, url, fallback? }>`; PNG composites all panes, falls back to SVG. |
 | `exportData({ format: 'csv'\|'json', range: 'all'\|'visible', includeVolume?, ... })` | Serialize the OHLC series (`time,open,high,low,close[,volume]`). |
 | `ApexStock.setLicense(key)` | Static: register license key. |
 | `ApexStock.setApexCharts(ctor)` | Static: register the ApexCharts constructor app-wide. |
 | `ApexStock.registerIndicator(name, def)` | Static: custom indicator (`{ type, calc, defaultParams?, stream? }`). |
 | `ApexStock.registerDrawingTool(name, def)` | Static: custom data-space drawing type (`def.render(data, helpers)` → SVG). |
+| `ApexStock.registerTheme(name, def)` / `ApexStock.getThemePresets()` | 0.5.0 static: register a preset from any subset of `{ mode, up, down, grid, axis, background, accent }`. |
+| `ApexStock.sync(instances, { zoom?, crosshair? })` | 0.5.0 static: link independent charts (mirrored range + crosshair guide). Returns `{ disconnect() }`. |
+| `ApexStock.stats` | 0.5.0 static: the whole statistics engine, no chart or DOM (`rangeStats`, `drawdown`, `returns`, `volatility`, `annualize`, `inferPeriodsPerYear`, `align`, `baseline`, `rebase`, `relative`). |
 | `ApexStock.normalize` / `fromArrays` / `fromCSV` | Static data adapters (see above). |
 | `ApexStock.aggregateOHLC(series, interval)` / `ApexStock.INTERVALS` | Static: roll candles to a coarser timeframe (`1m 5m 15m 30m 1h 2h 4h 12h 1d 1w 1M`). |
 | `ApexStock.STATE_VERSION` / `ApexStock.migrateState(state)` | State schema version (2) and migration helper. |
@@ -140,8 +163,14 @@ Display labels are title-cased ("Bollinger Bands") but keys stay lowercase.
 5. Abbreviated indicator keys → use the full phrase.
 6. A second symbol as another `series` entry → treated as an indicator. Use `addComparison({ name, data })`.
 7. Mutating the same options/series object in a wrapper → no redraw; pass a new identity (memoize in React).
-8. Expecting `getState()` to capture price lines/annotations → it captures theme, chart type, indicators, zoom, and drawings only.
+8. Expecting `getState()` to capture everything → 0.5.0 captures a lot more (annotations and price lines included), but NOT price-line callbacks or comparison instrument data. Pre-0.5.0 docs saying annotations/price lines are never captured are stale.
 9. Custom drawings missing after reload → call `ApexStock.registerDrawingTool` again before `setState()`.
+10. Installing ApexStock 0.5.0 against ApexCharts 6 → ERESOLVE, or a crosshair that drifts off the cursor when zoomed with indicators. Upgrade to `apexcharts@^7.1.0`.
+11. Using `rangeChange` for per-frame work → it is once per gesture. Use `rangeChanging` (0.5.0) for overlays that must track a live zoom.
+12. Assuming the old comparison baseline → the default is `'common'` since 0.5.0, not each instrument's own first point.
+13. Multiplying a statistic by 100 → percent-like values are already in percent units (`20.42` means +20.42%).
+14. Treating a `null` statistic as an error → it is the documented "data cannot support this"; the reason is in `warnings`.
+15. Naming a comparison instrument after the primary series → refused since 0.5.0 (it used to filter the price series off the chart).
 
 ---
 
@@ -151,4 +180,4 @@ Display labels are title-cased ("Bollinger Bands") but keys stay lowercase.
 npm install apexstock react-apexstock   # or vue-apexstock / ngx-apexstock
 ```
 
-Props: `options` (required, full StockChartOptions), `series?` (overrides `options.series`), `apexCharts?` (inject the imported constructor, no global needed). Accessors: `getInstance()`, `getElement()`. Updates diff by identity, pass new objects/arrays. SSR-safe (client-only render). Angular selector is `apex-stock` (standalone). Unmount is fully clean with core 0.4.0+.
+Props: `options` (required, full StockChartOptions), `series?` (overrides `options.series`), `apexCharts?` (inject the imported constructor, no global needed). Accessors: `getInstance()`, `getElement()`. Updates diff by identity, pass new objects/arrays. SSR-safe (client-only render). Angular selector is `apex-stock` (standalone). Unmount is fully clean with core 0.4.0+. Wrappers ship at 0.2.2 with peers `apexstock >=0.5.0 <1` and `apexcharts ^7.1.0`.
