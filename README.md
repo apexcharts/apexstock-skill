@@ -11,14 +11,14 @@ AI coding skill for building [ApexStock](https://apexcharts.com/docs/apexstock/)
 > | ApexTree, hierarchy / org charts | `apextree` | [`apextree-skill`](https://github.com/apexcharts/apextree-skill) |
 > | ApexSankey, flow / Sankey | `apexsankey` | [`apexsankey-skill`](https://github.com/apexcharts/apexsankey-skill) |
 > | Apex Grid, data grid | `apex-grid` | [`apexgrid-skill`](https://github.com/apexcharts/apexgrid-skill) |
-| ApexMaps, maps / geo | `apexmaps` | [`apexmaps-skill`](https://github.com/apexcharts/apexmaps-skill) |
+> | ApexMaps, maps / geo | `apexmaps` | [`apexmaps-skill`](https://github.com/apexcharts/apexmaps-skill) |
 > | **ApexStock**, financial / stock · *this skill* | `apexstock` | `apexstock-skill` |
 
 ## What This Does
 
 AI models routinely get stock-chart code wrong: forgetting to provide the ApexCharts constructor, using flat `o`/`h`/`l`/`c` keys instead of the `y: [o,h,l,c]` array, calling `update()` on every tick instead of `appendData()`, or adding a second symbol as another `series` entry instead of comparison mode. This skill ships structured reference files so the assistant generates correct ApexStock code on the first try.
 
-> **ApexStock 0.5.0 requires `apexcharts` `^7.1.0`** (it was `^6.7.0` for 0.4.0). This is a breaking change, and the wrappers at 0.2.2 carry it too. The skill leads with it.
+> **ApexStock 0.5.2 accepts `apexcharts` `^7.1.0 || ^8.0.0`** (0.5.0 and 0.5.1 accept `^7.1.0` only; 0.4.0 needed `^6.7.0`). The wrappers at 0.2.3 carry the same range. The skill leads with it.
 
 ### Coverage
 

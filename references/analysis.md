@@ -208,8 +208,10 @@ The on-chart measure label is multi-line and comes from the same engine;
 
 ### ApexCharts measure-ruler interop
 
-When you load the optional `apexcharts/features/measure` module (**Tier 2 in
-ApexCharts 7, so it needs an explicit import even on the full bundle**) and set
+When you load the optional `apexcharts/features/measure` module (**not in the
+default `apexcharts` bundle in 7.x or 8.x, so add
+`import 'apexcharts/features/measure'`; ApexCharts 8's `apexcharts/full` bundle
+already includes it**) and set
 `chart: { measure: { enabled: true } }`, ApexStock supplies `chart.measure.label`
 from the same statistics engine and re-emits the core `measured` event as
 `rangeMeasured` with `source: 'coreRuler'`, so both gestures produce one

@@ -11,16 +11,19 @@ npm install apexstock vue-apexstock     # Vue 3
 npm install apexstock ngx-apexstock     # Angular
 ```
 
-**Wrapper versions and peer ranges (all changed in 0.5.0).** The three wrappers
-ship at **0.2.2** and peer-depend on `apexstock` (`>=0.5.0 <1`) and `apexcharts`
-(`^7.1.0`).
+**Wrapper versions and peer ranges.** The three wrappers ship at **0.2.3** and
+peer-depend on `apexstock` (`>=0.5.0 <1`) and `apexcharts`
+(`^7.1.0 || ^8.0.0`). A wrapper at 0.2.2 accepts ApexCharts 7 only. On
+ApexCharts 8 the core must be apexstock 0.5.2 or later, since 0.5.0 and 0.5.1
+peer `^7.1.0`.
 
 `>=0.5.0 <1` is the only apexstock range that agrees with `apexcharts@^7.1.0`,
 because apexstock 0.3.x requires `^5.15.0` and 0.4.x requires `^6.7.0`. Left at
 the old `>=0.3.0 <1`, the two peers were mutually unsatisfiable and both
-`npm ci` and `npm install` failed with **ERESOLVE**. If you hit that error,
-upgrade the wrapper to 0.2.2 and ApexCharts to 7.1.0 rather than forcing the
-install. (Wrappers published before 0.2.2 declared no `apexcharts` peer at
+`npm ci` and `npm install` failed with **ERESOLVE**. If you hit ERESOLVE,
+upgrade the wrapper to 0.2.3 and apexstock to 0.5.2 (and ApexCharts to 7.1.0
+or later if it is older) rather than forcing the install or downgrading
+ApexCharts. (Wrappers published before 0.2.2 declared no `apexcharts` peer at
 all.)
 
 ## Providing ApexCharts: use the `apexCharts` prop

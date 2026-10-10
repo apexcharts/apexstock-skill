@@ -20,4 +20,4 @@ When working in GitHub's web editor with Copilot, paste the relevant sections fr
 
 ## Verification
 
-Ask Copilot to generate a candlestick chart with Bollinger Bands and a live tick feed. It should set `window.ApexCharts` before constructing, use the `{ x, y: [o,h,l,c], v? }` OHLC shape, add indicators through `plotOptions.stockChart.indicators`, and stream bars with `appendData(...)` rather than `update()`.
+Ask Copilot to generate a candlestick chart with Bollinger Bands and a live tick feed. It should provide the ApexCharts constructor (injected with `new ApexStock(el, options, { ApexCharts })`, registered with `ApexStock.setApexCharts`, or the `window.ApexCharts` global), use the `{ x, y: [o,h,l,c], v? }` OHLC shape, add indicators through `plotOptions.stockChart.indicators`, and stream bars with `appendData(...)` rather than `update()`.

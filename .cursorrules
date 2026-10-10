@@ -2,9 +2,9 @@
 
 You are working with ApexStock, a financial / stock charting library built on top of ApexCharts.
 
-!! BREAKING in ApexStock 0.5.0: the `apexcharts` peer is now `^7.1.0` (was `^6.7.0` for 0.4.0, `^5.15.0` for 0.3.x).
-Run `npm install apexcharts@^7.1.0` when upgrading. The wrappers ship at 0.2.2 with the same requirement, and
-`apexstock: ">=0.5.0 <1"` is the only range that agrees with `apexcharts: "^7.1.0"` (ERESOLVE otherwise).
+!! ApexStock 0.5.2 accepts `apexcharts` `^7.1.0 || ^8.0.0` (0.5.0 and 0.5.1: `^7.1.0` only; 0.4.0: `^6.7.0`; 0.3.x: `^5.15.0`).
+The wrappers ship at 0.2.3 with the same range; a 0.2.2 wrapper accepts ApexCharts 7 only (ERESOLVE next to ApexCharts 8).
+Every chart ApexStock draws (line, area, rangeArea, bar, candlestick) is in the ApexCharts 8 default bundle: no extra import.
 Documentation: https://apexcharts.com/docs/apexstock/
 NPM: apexstock
 GitHub: https://github.com/apexcharts/apexstock
@@ -30,8 +30,8 @@ Wrappers call `render()` on mount and `destroy()` on unmount, take `options` / `
 9. **`updateIndicator(key)` toggles; `updateIndicator(key, params)` / `setIndicatorParams(key, params)` sets params and ensures active** (never toggles off), e.g. `updateIndicator('rsi', { period: 21 })`.
 10. **`destroy()` is a full, idempotent teardown as of 0.4.0** (charts, panes, toolbars, listeners, stylesheet; StrictMode-safe). On ≤ 0.3.x it left toolbars behind, there use an owned wrapper element and remove it on teardown.
 11. **Theme** is `theme: { mode: 'light' | 'dark' }`, or `stock.updateTheme('dark')` at runtime. Restyle via `--apexstock-*` CSS variables (scoped; they don't leak to/from `:root`).
-12. **Set the license key once** at app startup: `ApexStock.setLicense('KEY')` (removes the watermark).
-13. **Persistence:** trading price lines, annotations, and comparisons persist across update / theme / chart-type switch / streaming. `getState()` / `setState()` serializes theme, chart type, indicators + params, zoom, and drawings (schema v2, `ApexStock.STATE_VERSION === 2`); price lines and annotations are NOT serialized.
+12. **Set the license key once** at app startup: `ApexStock.setLicense('KEY')` (removes the watermark). ApexStock has no free tier: it is licensed from the Premium plan up, whatever the organisation's size. Without a valid key it renders with a trial watermark, which is for evaluation only.
+13. **Persistence:** trading price lines, annotations, and comparisons persist across update / theme / chart-type switch / streaming. `getState()` / `setState()` serializes theme and preset, chart type, indicators + params, zoom, drawings, annotations, price lines, event markers, price scale, pane height ratios and the comparison setup (schema v2, `ApexStock.STATE_VERSION === 2`). Not captured: price-line callbacks (re-bind with `updatePriceLine`) and comparison instrument data (answer `comparisonRestoreNeeded` with `addComparison`).
 
 ---
 
@@ -62,7 +62,7 @@ Adapters (static, output validated + time-sorted): `ApexStock.normalize(rows, ma
 import ApexCharts from 'apexcharts';
 import ApexStock from 'apexstock';
 
-ApexStock.setLicense('KEY');                    // optional, once at startup
+ApexStock.setLicense('KEY');                    // required in production; without a key the chart shows a trial watermark
 
 const stock = new ApexStock(document.getElementById('chart'), {
   chart: { height: 600 },
@@ -165,7 +165,7 @@ Display labels are title-cased ("Bollinger Bands") but keys stay lowercase.
 7. Mutating the same options/series object in a wrapper → no redraw; pass a new identity (memoize in React).
 8. Expecting `getState()` to capture everything → 0.5.0 captures a lot more (annotations and price lines included), but NOT price-line callbacks or comparison instrument data. Pre-0.5.0 docs saying annotations/price lines are never captured are stale.
 9. Custom drawings missing after reload → call `ApexStock.registerDrawingTool` again before `setState()`.
-10. Installing ApexStock 0.5.0 against ApexCharts 6 → ERESOLVE, or a crosshair that drifts off the cursor when zoomed with indicators. Upgrade to `apexcharts@^7.1.0`.
+10. Installing ApexStock 0.5.x against ApexCharts 6 → ERESOLVE, or a crosshair that drifts off the cursor when zoomed with indicators. Use `apexcharts@^7.1.0` or `@^8.0.0`. ApexCharts 8 next to apexstock 0.5.0 / 0.5.1 or a 0.2.2 wrapper is ERESOLVE too: upgrade to apexstock 0.5.2 and the wrapper to 0.2.3.
 11. Using `rangeChange` for per-frame work → it is once per gesture. Use `rangeChanging` (0.5.0) for overlays that must track a live zoom.
 12. Assuming the old comparison baseline → the default is `'common'` since 0.5.0, not each instrument's own first point.
 13. Multiplying a statistic by 100 → percent-like values are already in percent units (`20.42` means +20.42%).
@@ -180,4 +180,4 @@ Display labels are title-cased ("Bollinger Bands") but keys stay lowercase.
 npm install apexstock react-apexstock   # or vue-apexstock / ngx-apexstock
 ```
 
-Props: `options` (required, full StockChartOptions), `series?` (overrides `options.series`), `apexCharts?` (inject the imported constructor, no global needed). Accessors: `getInstance()`, `getElement()`. Updates diff by identity, pass new objects/arrays. SSR-safe (client-only render). Angular selector is `apex-stock` (standalone). Unmount is fully clean with core 0.4.0+. Wrappers ship at 0.2.2 with peers `apexstock >=0.5.0 <1` and `apexcharts ^7.1.0`.
+Props: `options` (required, full StockChartOptions), `series?` (overrides `options.series`), `apexCharts?` (inject the imported constructor, no global needed). Accessors: `getInstance()`, `getElement()`. Updates diff by identity, pass new objects/arrays. SSR-safe (client-only render). Angular selector is `apex-stock` (standalone). Unmount is fully clean with core 0.4.0+. Wrappers ship at 0.2.3 with peers `apexstock >=0.5.0 <1` and `apexcharts ^7.1.0 || ^8.0.0` (a 0.2.2 wrapper accepts ApexCharts 7 only).

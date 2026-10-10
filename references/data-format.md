@@ -128,9 +128,10 @@ type StockChartOptions = {
 
 `StockChartOptions` is a **superset of standard ApexCharts options**: anything
 you'd put under `chart` (height, id, zoom, animations, events, …) is respected.
-**ApexStock 0.5.0 targets ApexCharts 7.x (peer dependency `apexcharts@^7.1.0`).**
-This is a breaking change from 0.4.0, which required `^6.7.0`. Run
-`npm install apexcharts@^7.1.0` when upgrading.
+**ApexStock 0.5.2 targets ApexCharts 7.1+ and 8.x (peer dependency
+`apexcharts@^7.1.0 || ^8.0.0`).** 0.5.0 and 0.5.1 accepted `^7.1.0` only, and
+0.4.0 required `^6.7.0`. No extra ApexCharts import is needed on 8.x: every
+chart type ApexStock draws stays in the default bundle.
 
 > **ApexStock mutates the options object** it receives, it sets `chart.id`,
 > writes back the normalized `series`, and strips a nullish top-level `theme`.

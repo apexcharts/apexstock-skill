@@ -21,14 +21,15 @@ description: >
   (multiple oscillator panes since 0.4.0), the `render()` / `update()` /
   `appendData()` / `destroy()` lifecycle, events, `getState` / `setState`,
   theming via `--apexstock-*` tokens, and framework integration
-  (React / Vue / Angular). ApexStock 0.5.0 requires `apexcharts` `^7.1.0`.
+  (React / Vue / Angular). ApexStock 0.5.2 works with `apexcharts`
+  `^7.1.0 || ^8.0.0` (0.5.0 and 0.5.1 accept 7.x only).
   In React / Vue / Angular projects, prefer the
   framework wrapper packages (`react-apexstock`, `vue-apexstock`,
   `ngx-apexstock`) over the core API.
 metadata:
   author: ApexCharts
-  version: "2.0.1"
-  library_version: "0.5.1"
+  version: "2.1.0"
+  library_version: "0.5.2"
   category: data-visualization
   tags: [stock, financial, candlestick, ohlc, technical-indicators, charts, apexstock]
   docs: https://apexcharts.com/docs/apexstock/
@@ -47,17 +48,20 @@ and range measurements, real-time
 streaming, state persistence, image/data/PDF export, and light/dark theming
 with named presets.
 
-> **⚠️ Breaking in 0.5.0: the `apexcharts` peer requirement is now `^7.1.0`**
-> (it was `^6.7.0` for 0.4.0, and `^5.15.0` for 0.3.x). Run
-> `npm install apexcharts@^7.1.0` when upgrading. Two reasons: the declared
-> range had gone stale against what the suite actually tests, and the crosshair
-> fix that keeps a zoomed chart with indicators accurate lives in ApexCharts
-> 7.1.0, so a correct crosshair is not available below it. The three framework
-> wrappers (at 0.2.2) carry the same requirement, and `apexstock: ">=0.5.0 <1"`
-> is the only range that agrees with `apexcharts: "^7.1.0"`. Note that
-> ApexCharts 7.0 moved nine features out of its default bundle; the one that
-> matters here is `apexcharts/features/measure`, needed only if you want the
-> core measure-ruler interop described in §8.
+> **⚠️ Peer range: apexstock 0.5.2 accepts `apexcharts` `^7.1.0 || ^8.0.0`.**
+> 0.5.0 and 0.5.1 accept `^7.1.0` only (0.4.0 needed `^6.7.0`, 0.3.x
+> `^5.15.0`), so on ApexCharts 8 use apexstock 0.5.2 or later. The 7.1.0 floor
+> (since 0.5.0) is where the crosshair fix for a zoomed chart with indicators
+> lives, so a correct crosshair is not available below it. The three framework
+> wrappers ship at 0.2.3 with the same range; a wrapper at 0.2.2 accepts
+> ApexCharts 7 only and fails with ERESOLVE next to ApexCharts 8. ApexCharts 8.0
+> moved unit, sunburst, violin, drilldown, waterfall, dumbbell and streamgraph
+> out of its default bundle. ApexStock draws only line, area, rangeArea, bar and
+> candlestick, which stay in it, so no extra import is needed.
+> `apexcharts/features/measure` is still opt-in on the default bundle
+> (ApexCharts 8's `apexcharts/full` includes it), and it matters only for the
+> core measure-ruler interop in §9 (see
+> [references/analysis.md](references/analysis.md)).
 
 ## Framework wrapper detection: check `package.json` first
 
@@ -126,7 +130,10 @@ for vanilla JS.
     overriding `--apexstock-*` CSS custom properties (they are scoped and do not
     leak into your page).
 12. **Set the license key once** at app startup with
-    `ApexStock.setLicense('KEY')` to remove the watermark.
+    `ApexStock.setLicense('KEY')` to remove the watermark. ApexStock has no
+    free tier: it is licensed from the Premium plan up, whatever the
+    organisation's size. Without a valid key it renders with a trial
+    watermark, which is for evaluation only.
 13. **Persistence boundaries (rewritten in 0.5.0).** Trading price lines persist
     across `update()`, theme change, chart-type switch, and streaming appends,
     and so do annotations and comparisons. `getState()` / `setState()` now
@@ -276,7 +283,7 @@ data from `series[0].data` and its own settings from `plotOptions.stockChart`.
 import ApexCharts from 'apexcharts';
 import ApexStock from 'apexstock';
 
-ApexStock.setLicense('KEY');                    // optional, once at app startup
+ApexStock.setLicense('KEY');                    // required in production; without a key the chart shows a trial watermark
 
 const stock = new ApexStock(document.getElementById('chart'), {
   chart: { height: 600 },
@@ -309,7 +316,7 @@ stock.destroy();                                // full teardown (idempotent as 
 | `removeIndicator(key)` | Remove an indicator overlay/oscillator. |
 | `listIndicators()` / `getIndicator(key)` | Introspect available indicators (built-in + custom) with `key`, `label`, `type`, `builtin`, `active`, `streamable`, `params`. |
 | `on(name, handler)` / `off(name, handler?)` / `once(name, handler)` / `emit(name, payload)` | Event bus; `on` returns an unsubscribe function. See §10. |
-| `getState()` / `setState(state)` | Serialize/restore theme, chart type, indicators + params, zoom, and drawings as versioned JSON. See §10. |
+| `getState()` / `setState(state)` | Serialize/restore theme + preset, chart type, indicators + params, zoom, drawings, annotations, price lines, event markers, price scale, pane ratios and the comparison setup as versioned JSON (not price-line callbacks or comparison instrument data). See §10. |
 | `getVisibleRange()` / `setVisibleRange(min, max)` | Read or set the visible x-window across all panes (fires `rangeChange`). |
 | `updateTheme('light' \| 'dark')` / `getTheme()` | Switch/read theme at runtime. |
 | `addPriceLine(config)` | Generic trading price line; returns an id (or `null`). |
@@ -649,10 +656,10 @@ Details, plus `ApexStock.sync()` for linking independent charts, are in
 11. **Custom drawings vanish after reload.** A serialized custom drawing type
     re-renders only if `ApexStock.registerDrawingTool(name, def)` has been
     called again in the new session before `setState()`.
-12. **Installing ApexStock 0.5.0 against ApexCharts 6.** *(0.5.0)* The peer is
-    now `^7.1.0`; `npm install` fails with ERESOLVE, or, if forced, the
-    crosshair drifts off the cursor on a zoomed chart with indicators. Upgrade
-    ApexCharts.
+12. **Installing ApexStock 0.5.x against ApexCharts 6.** *(0.5.0)* The peer is
+    `^7.1.0 || ^8.0.0` as of 0.5.2 (`^7.1.0` on 0.5.0 and 0.5.1);
+    `npm install` fails with ERESOLVE, or, if forced, the crosshair drifts off
+    the cursor on a zoomed chart with indicators. Upgrade ApexCharts.
 13. **Subscribing to `rangeChange` for per-frame work.** *(0.5.0)* It is
     deliberately once per gesture. An overlay that must track a live zoom wants
     the new `rangeChanging` (`source: 'live'`); `rangeChange` is for the work
@@ -675,6 +682,10 @@ Details, plus `ApexStock.sync()` for linking independent charts, are in
     statistics are a summary, not a column. `include: ['analysis']` gives you
     per-bar `return` and `drawdown`; the window summary comes from
     `getRangeStats()`, or from the PDF summary band.
+19. **Installing ApexCharts 8 next to apexstock 0.5.0 / 0.5.1 or a 0.2.2
+    wrapper.** *(0.5.2)* Those peer `apexcharts` `^7.1.0` only, so
+    `npm install` fails with ERESOLVE. Upgrade to apexstock 0.5.2 and the
+    wrapper to 0.2.3 rather than forcing the install or downgrading ApexCharts.
 
 > **Historical note (fixed, do not code around these in 0.4.0):** In ≤ 0.3.x,
 > `destroy()` did not remove the indicator toolbar or the drawing-tools DOM,
