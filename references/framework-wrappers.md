@@ -26,6 +26,14 @@ or later if it is older) rather than forcing the install or downgrading
 ApexCharts. (Wrappers published before 0.2.2 declared no `apexcharts` peer at
 all.)
 
+**Ignite UI theming in a wrapper app** *(apexstock 0.6.0)*. Import
+`apexstock/ignite-ui` once in the app entry (`main.ts`), before the first chart
+renders; it also loads `apexcharts/features/ignite-ui`, so the app needs an
+ApexCharts release that ships that entry (8.8.0). Free, no licence key. Leave
+`theme.mode` out of `options` so a dark Ignite UI theme can turn the chart
+dark; `theme: { designSystem: false }` opts one chart out. See
+[theming.md](theming.md).
+
 ## Providing ApexCharts: use the `apexCharts` prop
 
 ApexStock needs the ApexCharts constructor but does not bundle it. As of

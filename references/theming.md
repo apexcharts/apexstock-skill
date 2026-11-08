@@ -98,6 +98,47 @@ import 'apexstock/theme-template.css';   // then edit the token values
 See the library's `THEMING.md` and `examples/theming.html` for the full token
 reference and a live override recipe.
 
+## Using with Ignite UI (from apexstock 0.6.0)
+
+Ignite UI theming is an add-on, **free, no licence key**. Load it once and
+stock charts follow the Ignite UI theme on the page: the toolbar, its menus and
+popups, the legend, the analysis panel, the rise and fall colours (candles,
+measure boxes, price lines) from the theme's success and error colours, the
+font, and light or dark.
+
+```js
+import ApexCharts from 'apexcharts';
+import ApexStock from 'apexstock';
+import 'apexstock/ignite-ui'; // also loads apexcharts/features/ignite-ui
+```
+
+```html
+<!-- Script tags: ApexCharts' add-on themes the charts, ApexStock's the rest. -->
+<script src="apexcharts/dist/apexcharts.min.js"></script>
+<script src="apexcharts/dist/features/ignite-ui.js"></script>
+<script src="apexstock/dist/apexstock.min.js"></script>
+<script src="apexstock/dist/apexstock.ignite-ui.min.js"></script>
+```
+
+- **Mode.** With no `theme.mode`, a dark Ignite UI theme makes the chart dark;
+  a mode or preset you set wins, so `theme: { mode: 'light' }` blocks the dark
+  variant. The main plot stays transparent over ApexStock's own surface, which
+  keeps its light and dark backgrounds.
+- **Ranking.** Everything you set outranks the theme: options,
+  `--apexstock-*` and `--apx-*` tokens, a preset, candle colours passed to
+  `update()`. A preset, a colour-blind mode or monochrome keeps ApexStock's own
+  colours. (Family-wide: explicit option > product CSS variable > `--apx-*` >
+  named theme/palette > `--ig-*` > defaults.)
+- **Per chart.** `theme: { designSystem: false }` turns it off for one chart;
+  `theme: { tokens: false }` also turns off the charts' `--apx-*` token reads.
+- **Without the add-on** the `--ig-*` tokens are ignored, with no error; the
+  `--apx-*` tokens work either way. Import it before the first render, or call
+  `stock.update({})` after. ApexStock has no `refreshTokens()`: the same
+  `update({})` picks up a swapped Ignite UI stylesheet.
+- **Versions.** The bundler entry needs the ApexCharts release that ships
+  `apexcharts/features/ignite-ui` (8.8.0). In a wrapper app, import
+  `apexstock/ignite-ui` once in the app entry.
+
 ## Theming bugs fixed in 0.5.0 (do not work around these)
 
 Four surfaces used to be painted **inline at construction time**, which meant

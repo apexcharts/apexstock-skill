@@ -128,7 +128,8 @@ for vanilla JS.
 11. **Theme** is `theme: { mode: 'light' | 'dark' }` at construction, or
     `stock.updateTheme('dark')` at runtime. Restyle the UI beyond light/dark by
     overriding `--apexstock-*` CSS custom properties (they are scoped and do not
-    leak into your page).
+    leak into your page). To follow an Ignite UI theme on the page, import the
+    free `apexstock/ignite-ui` add-on *(from 0.6.0)*; see §12.
 12. **Set the license key once** at app startup with
     `ApexStock.setLicense('KEY')` to remove the watermark. ApexStock has no
     free tier: it is licensed from the Premium plan up, whatever the
@@ -210,7 +211,7 @@ timestamp handling, normalization, the data adapters, and data export.
 {
   chart: { height?: number; id?: string; /* any ApexCharts chart config */ };
   series: Array<{ name?: string; data: OHLCPoint[] }>;   // series[0] = OHLC
-  theme?: { mode?: 'light' | 'dark'; preset?: string };  // preset: 0.5.0
+  theme?: { mode?: 'light' | 'dark'; preset?: string; designSystem?: boolean; tokens?: boolean };  // preset: 0.5.0; designSystem, tokens: 0.6.0
   plotOptions?: {
     stockChart?: {
       // object map (recommended) OR array of keys
@@ -686,6 +687,11 @@ Details, plus `ApexStock.sync()` for linking independent charts, are in
     wrapper.** *(0.5.2)* Those peer `apexcharts` `^7.1.0` only, so
     `npm install` fails with ERESOLVE. Upgrade to apexstock 0.5.2 and the
     wrapper to 0.2.3 rather than forcing the install or downgrading ApexCharts.
+20. **Expecting an Ignite UI theme without the add-on.** *(0.6.0)* An Ignite UI
+    stylesheet on the page changes nothing until you `import
+    'apexstock/ignite-ui'`: the `--ig-*` tokens are ignored silently. And a
+    `theme: { mode: 'light' }` (or a preset) pins the look, so a dark Ignite UI
+    theme cannot turn the chart dark: leave `theme.mode` unset to follow it.
 
 > **Historical note (fixed, do not code around these in 0.4.0):** In ≤ 0.3.x,
 > `destroy()` did not remove the indicator toolbar or the drawing-tools DOM,
@@ -718,6 +724,39 @@ Three layers, in increasing order of specificity:
    scoped to `[class^="apexstock-"]` and never leak to or from your page's
    `:root`.
 
+**Ignite UI theming** *(from apexstock 0.6.0; free, no licence key)*. An
+opt-in add-on: load it once and stock charts follow the Ignite UI theme on the
+page (toolbar, menus and popups, legend, analysis panel, rise and fall colours
+from the theme's success and error colours, the font, and light or dark).
+
+```js
+import ApexCharts from 'apexcharts';
+import ApexStock from 'apexstock';
+import 'apexstock/ignite-ui';   // also loads apexcharts/features/ignite-ui
+```
+
+```html
+<!-- script tags, in this order: ApexCharts' add-on themes the charts, ApexStock's the rest -->
+<script src="apexcharts/dist/apexcharts.min.js"></script>
+<script src="apexcharts/dist/features/ignite-ui.js"></script>
+<script src="apexstock/dist/apexstock.min.js"></script>
+<script src="apexstock/dist/apexstock.ignite-ui.min.js"></script>
+```
+
+- Ranking: everything you set wins (options, `--apexstock-*` and `--apx-*`
+  tokens, a preset, candle colours passed to `update()`), then Ignite UI, then
+  the defaults. A preset, colour-blind mode or monochrome keeps ApexStock's own
+  colours.
+- With no `theme.mode`, a dark Ignite UI theme makes the chart dark.
+- `theme: { designSystem: false }` turns it off for one chart; `theme: {
+  tokens: false }` also turns off the charts' `--apx-*` token reads.
+- Without the add-on the `--ig-*` tokens are ignored; `--apx-*` work either way.
+  Import it before the first render, or call `stock.update({})` after; the same
+  call picks up a swapped Ignite UI stylesheet (ApexStock has no
+  `refreshTokens()`).
+- The bundler entry needs an ApexCharts release that ships
+  `apexcharts/features/ignite-ui` (8.8.0 and later).
+
 See [references/theming.md](references/theming.md).
 
 ---
@@ -731,6 +770,6 @@ See [references/theming.md](references/theming.md).
 | [streaming-and-aggregation.md](references/streaming-and-aggregation.md) | `appendData`, `view`/`maxPoints`/`updateLast`, forming candle, streaming twins, visible-range accessors, `aggregateOHLC`, `INTERVALS` |
 | [trading-overlays.md](references/trading-overlays.md) | Price lines, data-space annotations, the drawing API (`addDrawing`, types, `snap`, reshapeable two-anchor drawings, `registerDrawingTool`, `drawing*` events), and the 0.5.0 chart furniture: event markers, the on-chart data legend, toolbar customization |
 | [framework-wrappers.md](references/framework-wrappers.md) | `react-apexstock`, `vue-apexstock`, `ngx-apexstock` props (incl. `apexCharts` injection), refs, cleanup |
-| [theming.md](references/theming.md) | Light/dark modes, the 0.5.0 named preset pack + `registerTheme`, `--apexstock-*` token reference, override recipe |
+| [theming.md](references/theming.md) | Light/dark modes, the 0.5.0 named preset pack + `registerTheme`, `--apexstock-*` token reference, override recipe, the 0.6.0 Ignite UI add-on |
 | [analysis.md](references/analysis.md) | *(0.5.0)* `getRangeStats` field by field, `getDrawdown`, the drawdown pane and per-pane heights, `measureRange` + the analysis panel + measure-ruler interop, comparison v2 (alignment, baselines, the five modes, the benchmark role, `getComparisonStats`), `getDataAt`, price-scale modes, and the headless `ApexStock.stats` namespace |
 | [state-and-export.md](references/state-and-export.md) | *(0.5.0)* The v2 state shape field by field, what is and is not captured and how to restore it, unified `export()` incl. PDF and `include`, and `ApexStock.sync()` |

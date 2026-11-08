@@ -33,7 +33,7 @@ AI models routinely get stock-chart code wrong: forgetting to provide the ApexCh
 - **Chart furniture** (0.5.0), event markers, the on-chart data legend, toolbar customization, and `ApexStock.sync()` for linking independent charts
 - **Events & state**, `on` / `off` / `once`, `crosshairMove` / `rangeChange` / `rangeChanging` / `indicatorToggle` / `drawing*` / `eventMarker*` / `priceScaleChange` / `rangeMeasured` / `comparison*`, and `getState` / `setState` (schema v2 now persists annotations, price lines, event markers, price scale, pane ratios, and the comparison setup)
 - **Export**, unified `export()` over png / svg / **pdf** / csv / json, with `include: ['indicators', 'analysis']`
-- **Theming**, light/dark modes, the named preset pack + `registerTheme`, and the scoped `--apexstock-*` token system
+- **Theming**, light/dark modes, the named preset pack + `registerTheme`, the scoped `--apexstock-*` token system, and the free Ignite UI add-on (0.6.0)
 - **Framework wrappers**: `react-apexstock`, `vue-apexstock`, `ngx-apexstock`, incl. the `apexCharts` injection prop
 
 ## Installation
@@ -89,7 +89,7 @@ const streaming = await readFile(referencePath('streaming-and-aggregation.md'), 
 │   ├── streaming-and-aggregation.md    # appendData, forming candle, visible range, aggregateOHLC
 │   ├── trading-overlays.md             # price lines, annotations, drawings, event markers, legend, toolbar
 │   ├── framework-wrappers.md           # React, Vue, Angular
-│   └── theming.md                      # light/dark, theme presets, --apexstock-* tokens
+│   └── theming.md                      # light/dark, theme presets, --apexstock-* tokens, Ignite UI
 └── install/
     ├── claude-code.md
     ├── cursor.md

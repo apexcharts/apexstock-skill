@@ -29,7 +29,7 @@ Wrappers call `render()` on mount and `destroy()` on unmount, take `options` / `
 8. **`update(newOptions)` merges + preserves** zoom, active indicators, theme, and chart type. In wrappers, pass a NEW object/array identity to trigger an update.
 9. **`updateIndicator(key)` toggles; `updateIndicator(key, params)` / `setIndicatorParams(key, params)` sets params and ensures active** (never toggles off), e.g. `updateIndicator('rsi', { period: 21 })`.
 10. **`destroy()` is a full, idempotent teardown as of 0.4.0** (charts, panes, toolbars, listeners, stylesheet; StrictMode-safe). On ≤ 0.3.x it left toolbars behind, there use an owned wrapper element and remove it on teardown.
-11. **Theme** is `theme: { mode: 'light' | 'dark' }`, or `stock.updateTheme('dark')` at runtime. Restyle via `--apexstock-*` CSS variables (scoped; they don't leak to/from `:root`).
+11. **Theme** is `theme: { mode: 'light' | 'dark' }`, or `stock.updateTheme('dark')` at runtime. Restyle via `--apexstock-*` CSS variables (scoped; they don't leak to/from `:root`). Ignite UI (from 0.6.0, free): `import 'apexstock/ignite-ui'` (also loads `apexcharts/features/ignite-ui`); script tags `apexcharts.min.js`, `apexcharts/dist/features/ignite-ui.js`, `apexstock.min.js`, `apexstock.ignite-ui.min.js`. Ranking: options > `--apexstock-*` > `--apx-*` / preset > Ignite UI > defaults. `theme: { designSystem: false }` turns it off per chart, `theme: { tokens: false }` also drops `--apx-*`. No `refreshTokens()`: `stock.update({})` after a stylesheet swap.
 12. **Set the license key once** at app startup: `ApexStock.setLicense('KEY')` (removes the watermark). ApexStock has no free tier: it is licensed from the Premium plan up, whatever the organisation's size. Without a valid key it renders with a trial watermark, which is for evaluation only.
 13. **Persistence:** trading price lines, annotations, and comparisons persist across update / theme / chart-type switch / streaming. `getState()` / `setState()` serializes theme and preset, chart type, indicators + params, zoom, drawings, annotations, price lines, event markers, price scale, pane height ratios and the comparison setup (schema v2, `ApexStock.STATE_VERSION === 2`). Not captured: price-line callbacks (re-bind with `updatePriceLine`) and comparison instrument data (answer `comparisonRestoreNeeded` with `addComparison`).
 
@@ -171,6 +171,7 @@ Display labels are title-cased ("Bollinger Bands") but keys stay lowercase.
 13. Multiplying a statistic by 100 → percent-like values are already in percent units (`20.42` means +20.42%).
 14. Treating a `null` statistic as an error → it is the documented "data cannot support this"; the reason is in `warnings`.
 15. Naming a comparison instrument after the primary series → refused since 0.5.0 (it used to filter the price series off the chart).
+16. Ignite UI stylesheet but no `apexstock/ignite-ui` add-on → `--ig-*` silently ignored (0.6.0). And `theme: { mode: 'light' }` or a preset pins the look, blocking a dark Ignite UI variant: leave `theme.mode` unset.
 
 ---
 
