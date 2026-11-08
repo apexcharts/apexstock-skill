@@ -18,7 +18,7 @@ AI coding skill for building [ApexStock](https://apexcharts.com/docs/apexstock/)
 
 AI models routinely get stock-chart code wrong: forgetting to provide the ApexCharts constructor, using flat `o`/`h`/`l`/`c` keys instead of the `y: [o,h,l,c]` array, calling `update()` on every tick instead of `appendData()`, or adding a second symbol as another `series` entry instead of comparison mode. This skill ships structured reference files so the assistant generates correct ApexStock code on the first try.
 
-> **ApexStock 0.5.2 accepts `apexcharts` `^7.1.0 || ^8.0.0`** (0.5.0 and 0.5.1 accept `^7.1.0` only; 0.4.0 needed `^6.7.0`). The wrappers at 0.2.3 carry the same range. The skill leads with it.
+> **ApexStock 0.6.0 (like 0.5.2) accepts `apexcharts` `^7.1.0 || ^8.0.0`** (0.5.0 and 0.5.1 accept `^7.1.0` only; 0.4.0 needed `^6.7.0`). The wrappers at 0.2.3 carry the same range and accept apexstock 0.6.0. The 0.6.0 Ignite UI add-on needs ApexCharts 8.8.0 or later. The skill leads with it.
 
 ### Coverage
 

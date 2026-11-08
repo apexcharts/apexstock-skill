@@ -20,16 +20,18 @@ description: >
   (per instance, app-wide, or the window global), overlays vs oscillators
   (multiple oscillator panes since 0.4.0), the `render()` / `update()` /
   `appendData()` / `destroy()` lifecycle, events, `getState` / `setState`,
-  theming via `--apexstock-*` tokens, and framework integration
-  (React / Vue / Angular). ApexStock 0.5.2 works with `apexcharts`
-  `^7.1.0 || ^8.0.0` (0.5.0 and 0.5.1 accept 7.x only).
+  theming via `--apexstock-*` tokens and the 0.6.0 Ignite UI add-on
+  (`apexstock/ignite-ui`), and framework integration
+  (React / Vue / Angular). ApexStock 0.6.0 (like 0.5.2) works with
+  `apexcharts` `^7.1.0 || ^8.0.0` (0.5.0 and 0.5.1 accept 7.x only); its
+  Ignite UI add-on needs ApexCharts 8.8.0 or later.
   In React / Vue / Angular projects, prefer the
   framework wrapper packages (`react-apexstock`, `vue-apexstock`,
   `ngx-apexstock`) over the core API.
 metadata:
   author: ApexCharts
-  version: "2.1.0"
-  library_version: "0.5.2"
+  version: "2.2.0"
+  library_version: "0.6.0"
   category: data-visualization
   tags: [stock, financial, candlestick, ohlc, technical-indicators, charts, apexstock]
   docs: https://apexcharts.com/docs/apexstock/
@@ -48,14 +50,17 @@ and range measurements, real-time
 streaming, state persistence, image/data/PDF export, and light/dark theming
 with named presets.
 
-> **⚠️ Peer range: apexstock 0.5.2 accepts `apexcharts` `^7.1.0 || ^8.0.0`.**
-> 0.5.0 and 0.5.1 accept `^7.1.0` only (0.4.0 needed `^6.7.0`, 0.3.x
-> `^5.15.0`), so on ApexCharts 8 use apexstock 0.5.2 or later. The 7.1.0 floor
+> **⚠️ Peer range: apexstock 0.6.0 (the current release, like 0.5.2) accepts
+> `apexcharts` `^7.1.0 || ^8.0.0`.** 0.5.0 and 0.5.1 accept `^7.1.0` only
+> (0.4.0 needed `^6.7.0`, 0.3.x `^5.15.0`), so on ApexCharts 8 use apexstock
+> 0.5.2 or later. The one exception inside that range is the 0.6.0
+> `apexstock/ignite-ui` add-on: it imports `apexcharts/features/ignite-ui`,
+> which first shipped in ApexCharts 8.8.0. The 7.1.0 floor
 > (since 0.5.0) is where the crosshair fix for a zoomed chart with indicators
 > lives, so a correct crosshair is not available below it. The three framework
-> wrappers ship at 0.2.3 with the same range; a wrapper at 0.2.2 accepts
-> ApexCharts 7 only and fails with ERESOLVE next to ApexCharts 8. ApexCharts 8.0
-> moved unit, sunburst, violin, drilldown, waterfall, dumbbell and streamgraph
+> wrappers ship at 0.2.3 with the same range and accept apexstock 0.6.0; a
+> wrapper at 0.2.2 accepts ApexCharts 7 only and fails with ERESOLVE next to
+> ApexCharts 8. ApexCharts 8.0 moved unit, sunburst, violin, drilldown, waterfall, dumbbell and streamgraph
 > out of its default bundle. ApexStock draws only line, area, rangeArea, bar and
 > candlestick, which stay in it, so no extra import is needed.
 > `apexcharts/features/measure` is still opt-in on the default bundle
@@ -685,13 +690,15 @@ Details, plus `ApexStock.sync()` for linking independent charts, are in
     `getRangeStats()`, or from the PDF summary band.
 19. **Installing ApexCharts 8 next to apexstock 0.5.0 / 0.5.1 or a 0.2.2
     wrapper.** *(0.5.2)* Those peer `apexcharts` `^7.1.0` only, so
-    `npm install` fails with ERESOLVE. Upgrade to apexstock 0.5.2 and the
-    wrapper to 0.2.3 rather than forcing the install or downgrading ApexCharts.
+    `npm install` fails with ERESOLVE. Upgrade to apexstock 0.5.2 or later
+    (0.6.0 is current) and the wrapper to 0.2.3 rather than forcing the
+    install or downgrading ApexCharts.
 20. **Expecting an Ignite UI theme without the add-on.** *(0.6.0)* An Ignite UI
     stylesheet on the page changes nothing until you `import
-    'apexstock/ignite-ui'`: the `--ig-*` tokens are ignored silently. And a
-    `theme: { mode: 'light' }` (or a preset) pins the look, so a dark Ignite UI
-    theme cannot turn the chart dark: leave `theme.mode` unset to follow it.
+    'apexstock/ignite-ui'` (or ApexCharts' `apexcharts/features/ignite-ui`,
+    which registers the same adapter): the `--ig-*` tokens are ignored
+    silently. And a `theme: { mode: 'light' }` (or a preset) pins the look, so
+    a dark Ignite UI theme cannot turn the chart dark: leave `theme.mode` unset to follow it.
 
 > **Historical note (fixed, do not code around these in 0.4.0):** In ≤ 0.3.x,
 > `destroy()` did not remove the indicator toolbar or the drawing-tools DOM,
@@ -737,10 +744,10 @@ import 'apexstock/ignite-ui';   // also loads apexcharts/features/ignite-ui
 
 ```html
 <!-- script tags, in this order: ApexCharts' add-on themes the charts, ApexStock's the rest -->
-<script src="apexcharts/dist/apexcharts.min.js"></script>
-<script src="apexcharts/dist/features/ignite-ui.js"></script>
-<script src="apexstock/dist/apexstock.min.js"></script>
-<script src="apexstock/dist/apexstock.ignite-ui.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@8.8.1/dist/apexcharts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@8.8.1/dist/features/ignite-ui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexstock@0.6.0/dist/apexstock.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexstock@0.6.0/dist/apexstock.ignite-ui.min.js"></script>
 ```
 
 - Ranking: everything you set wins (options, `--apexstock-*` and `--apx-*`
@@ -751,6 +758,9 @@ import 'apexstock/ignite-ui';   // also loads apexcharts/features/ignite-ui
 - `theme: { designSystem: false }` turns it off for one chart; `theme: {
   tokens: false }` also turns off the charts' `--apx-*` token reads.
 - Without the add-on the `--ig-*` tokens are ignored; `--apx-*` work either way.
+  ApexCharts' add-on alone has the same effect (it registers the adapter
+  every Apex product reads). ApexStock's alone, on a script-tag page, themes
+  everything but the plot's grid and axis text, so load both tags.
   Import it before the first render, or call `stock.update({})` after; the same
   call picks up a swapped Ignite UI stylesheet (ApexStock has no
   `refreshTokens()`).

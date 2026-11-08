@@ -128,9 +128,10 @@ type StockChartOptions = {
 
 `StockChartOptions` is a **superset of standard ApexCharts options**: anything
 you'd put under `chart` (height, id, zoom, animations, events, …) is respected.
-**ApexStock 0.5.2 targets ApexCharts 7.1+ and 8.x (peer dependency
-`apexcharts@^7.1.0 || ^8.0.0`).** 0.5.0 and 0.5.1 accepted `^7.1.0` only, and
-0.4.0 required `^6.7.0`. No extra ApexCharts import is needed on 8.x: every
+**ApexStock 0.6.0 (like 0.5.2) targets ApexCharts 7.1+ and 8.x (peer
+dependency `apexcharts@^7.1.0 || ^8.0.0`).** 0.5.0 and 0.5.1 accepted `^7.1.0`
+only, and 0.4.0 required `^6.7.0`. The 0.6.0 Ignite UI add-on needs ApexCharts
+8.8.0 or later. No extra ApexCharts import is needed on 8.x: every
 chart type ApexStock draws stays in the default bundle.
 
 > **ApexStock mutates the options object** it receives, it sets `chart.id`,

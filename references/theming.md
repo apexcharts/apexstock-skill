@@ -15,7 +15,10 @@ stock.getTheme();             // -> 'light' | 'dark'
 (Passing an explicit `theme: undefined` is stripped so ApexCharts applies its
 default; omit the key rather than passing `undefined`.)
 
-As of 0.5.0 `theme` reads two fields: `mode` and `preset`.
+As of 0.6.0 `theme` reads `mode`, `preset` (0.5.0), and `designSystem` and
+`tokens` (0.6.0, see "Using with Ignite UI" below). The 0.6.0 types also list
+the ApexCharts `theme` keys it passes on to the charts: `palette`,
+`monochrome` and `accessibility.colorBlindMode`.
 
 ## Theme presets (0.5.0)
 
@@ -114,10 +117,10 @@ import 'apexstock/ignite-ui'; // also loads apexcharts/features/ignite-ui
 
 ```html
 <!-- Script tags: ApexCharts' add-on themes the charts, ApexStock's the rest. -->
-<script src="apexcharts/dist/apexcharts.min.js"></script>
-<script src="apexcharts/dist/features/ignite-ui.js"></script>
-<script src="apexstock/dist/apexstock.min.js"></script>
-<script src="apexstock/dist/apexstock.ignite-ui.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@8.8.1/dist/apexcharts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@8.8.1/dist/features/ignite-ui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexstock@0.6.0/dist/apexstock.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexstock@0.6.0/dist/apexstock.ignite-ui.min.js"></script>
 ```
 
 - **Mode.** With no `theme.mode`, a dark Ignite UI theme makes the chart dark;
@@ -132,12 +135,15 @@ import 'apexstock/ignite-ui'; // also loads apexcharts/features/ignite-ui
 - **Per chart.** `theme: { designSystem: false }` turns it off for one chart;
   `theme: { tokens: false }` also turns off the charts' `--apx-*` token reads.
 - **Without the add-on** the `--ig-*` tokens are ignored, with no error; the
-  `--apx-*` tokens work either way. Import it before the first render, or call
+  `--apx-*` tokens work either way. ApexCharts' add-on alone has the same
+  effect (it registers the adapter every Apex product reads); ApexStock's
+  alone, on a script-tag page, themes everything but the plot's grid and axis
+  text, so load both tags. Import it before the first render, or call
   `stock.update({})` after. ApexStock has no `refreshTokens()`: the same
   `update({})` picks up a swapped Ignite UI stylesheet.
 - **Versions.** The bundler entry needs the ApexCharts release that ships
-  `apexcharts/features/ignite-ui` (8.8.0). In a wrapper app, import
-  `apexstock/ignite-ui` once in the app entry.
+  `apexcharts/features/ignite-ui` (8.8.0 or later; 8.8.1 is current). In a
+  wrapper app, import `apexstock/ignite-ui` once in the app entry.
 
 ## Theming bugs fixed in 0.5.0 (do not work around these)
 

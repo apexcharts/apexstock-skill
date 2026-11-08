@@ -2,8 +2,8 @@
 
 You are working with ApexStock, a financial / stock charting library built on top of ApexCharts.
 
-!! ApexStock 0.5.2 accepts `apexcharts` `^7.1.0 || ^8.0.0` (0.5.0 and 0.5.1: `^7.1.0` only; 0.4.0: `^6.7.0`; 0.3.x: `^5.15.0`).
-The wrappers ship at 0.2.3 with the same range; a 0.2.2 wrapper accepts ApexCharts 7 only (ERESOLVE next to ApexCharts 8).
+!! ApexStock 0.6.0 (like 0.5.2) accepts `apexcharts` `^7.1.0 || ^8.0.0` (0.5.0 and 0.5.1: `^7.1.0` only; 0.4.0: `^6.7.0`; 0.3.x: `^5.15.0`). Its `apexstock/ignite-ui` add-on needs ApexCharts 8.8.0 or later.
+The wrappers ship at 0.2.3 with the same range (apexstock `>=0.5.0 <1`, so 0.6.0 too); a 0.2.2 wrapper accepts ApexCharts 7 only (ERESOLVE next to ApexCharts 8).
 Every chart ApexStock draws (line, area, rangeArea, bar, candlestick) is in the ApexCharts 8 default bundle: no extra import.
 Documentation: https://apexcharts.com/docs/apexstock/
 NPM: apexstock
@@ -165,13 +165,13 @@ Display labels are title-cased ("Bollinger Bands") but keys stay lowercase.
 7. Mutating the same options/series object in a wrapper → no redraw; pass a new identity (memoize in React).
 8. Expecting `getState()` to capture everything → 0.5.0 captures a lot more (annotations and price lines included), but NOT price-line callbacks or comparison instrument data. Pre-0.5.0 docs saying annotations/price lines are never captured are stale.
 9. Custom drawings missing after reload → call `ApexStock.registerDrawingTool` again before `setState()`.
-10. Installing ApexStock 0.5.x against ApexCharts 6 → ERESOLVE, or a crosshair that drifts off the cursor when zoomed with indicators. Use `apexcharts@^7.1.0` or `@^8.0.0`. ApexCharts 8 next to apexstock 0.5.0 / 0.5.1 or a 0.2.2 wrapper is ERESOLVE too: upgrade to apexstock 0.5.2 and the wrapper to 0.2.3.
+10. Installing ApexStock 0.5.x against ApexCharts 6 → ERESOLVE, or a crosshair that drifts off the cursor when zoomed with indicators. Use `apexcharts@^7.1.0` or `@^8.0.0`. ApexCharts 8 next to apexstock 0.5.0 / 0.5.1 or a 0.2.2 wrapper is ERESOLVE too: upgrade to apexstock 0.5.2 or later (0.6.0 is current) and the wrapper to 0.2.3.
 11. Using `rangeChange` for per-frame work → it is once per gesture. Use `rangeChanging` (0.5.0) for overlays that must track a live zoom.
 12. Assuming the old comparison baseline → the default is `'common'` since 0.5.0, not each instrument's own first point.
 13. Multiplying a statistic by 100 → percent-like values are already in percent units (`20.42` means +20.42%).
 14. Treating a `null` statistic as an error → it is the documented "data cannot support this"; the reason is in `warnings`.
 15. Naming a comparison instrument after the primary series → refused since 0.5.0 (it used to filter the price series off the chart).
-16. Ignite UI stylesheet but no `apexstock/ignite-ui` add-on → `--ig-*` silently ignored (0.6.0). And `theme: { mode: 'light' }` or a preset pins the look, blocking a dark Ignite UI variant: leave `theme.mode` unset.
+16. Ignite UI stylesheet but no `apexstock/ignite-ui` (or `apexcharts/features/ignite-ui`) add-on → `--ig-*` silently ignored (0.6.0). And `theme: { mode: 'light' }` or a preset pins the look, blocking a dark Ignite UI variant: leave `theme.mode` unset.
 
 ---
 
