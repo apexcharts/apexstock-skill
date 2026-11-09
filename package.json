@@ -1,6 +1,6 @@
 {
   "name": "apexstock-skill",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "AI coding skill for ApexStock: structured reference docs that help AI assistants (Claude, Cursor, Copilot, etc.) generate correct ApexStock financial-chart code.",
   "keywords": [
     "apexstock",

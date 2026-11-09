@@ -30,7 +30,7 @@ description: >
   `ngx-apexstock`) over the core API.
 metadata:
   author: ApexCharts
-  version: "2.2.0"
+  version: "2.2.1"
   library_version: "0.6.0"
   category: data-visualization
   tags: [stock, financial, candlestick, ohlc, technical-indicators, charts, apexstock]
