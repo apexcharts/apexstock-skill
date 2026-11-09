@@ -134,7 +134,7 @@ for vanilla JS.
     `stock.updateTheme('dark')` at runtime. Restyle the UI beyond light/dark by
     overriding `--apexstock-*` CSS custom properties (they are scoped and do not
     leak into your page). To follow an Ignite UI theme on the page, import the
-    free `apexstock/ignite-ui` add-on *(from 0.6.0)*; see §12.
+    `apexstock/ignite-ui` add-on *(from 0.6.0; no extra licence key)*; see §12.
 12. **Set the license key once** at app startup with
     `ApexStock.setLicense('KEY')` to remove the watermark. ApexStock has no
     free tier: it is licensed from the Premium plan up, whatever the
@@ -731,7 +731,7 @@ Three layers, in increasing order of specificity:
    scoped to `[class^="apexstock-"]` and never leak to or from your page's
    `:root`.
 
-**Ignite UI theming** *(from apexstock 0.6.0; free, no licence key)*. An
+**Ignite UI theming** *(from apexstock 0.6.0; no extra licence key)*. An
 opt-in add-on: load it once and stock charts follow the Ignite UI theme on the
 page (toolbar, menus and popups, legend, analysis panel, rise and fall colours
 from the theme's success and error colours, the font, and light or dark).

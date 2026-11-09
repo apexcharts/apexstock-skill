@@ -103,7 +103,7 @@ reference and a live override recipe.
 
 ## Using with Ignite UI (from apexstock 0.6.0)
 
-Ignite UI theming is an add-on, **free, no licence key**. Load it once and
+Ignite UI theming is an add-on with **no extra licence key**. Load it once and
 stock charts follow the Ignite UI theme on the page: the toolbar, its menus and
 popups, the legend, the analysis panel, the rise and fall colours (candles,
 measure boxes, price lines) from the theme's success and error colours, the

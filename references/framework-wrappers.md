@@ -29,7 +29,7 @@ all.)
 **Ignite UI theming in a wrapper app** *(apexstock 0.6.0)*. Import
 `apexstock/ignite-ui` once in the app entry (`main.ts`), before the first chart
 renders; it also loads `apexcharts/features/ignite-ui`, so the app needs an
-ApexCharts release that ships that entry (8.8.0 or later). Free, no licence key. Leave
+ApexCharts release that ships that entry (8.8.0 or later). It needs no licence key of its own. Leave
 `theme.mode` out of `options` so a dark Ignite UI theme can turn the chart
 dark; `theme: { designSystem: false }` opts one chart out. See
 [theming.md](theming.md).
